@@ -28,7 +28,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
     color: #cccccc;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
-`,ad=[{title:`Sloway`,files:[{name:`V1__create_place_summary_view.sql`,type:`SQL`,code:`-- 기존에 테이블이 있다면 삭제
+`,ad=[{title:`Sloway`,files:[{name:`통계 알고리즘.sql`,type:`SQL`,code:`-- 기존에 테이블이 있다면 삭제
 DROP TABLE IF EXISTS place_summary;
 -- 기존에 존재하는 Materialized view 삭제
 DROP MATERIALIZED VIEW IF EXISTS place_summary;
@@ -99,7 +99,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
         첫번째 컴포넌트 알고리즘 : (총 예약건수 * 0.7 + (리뷰의 평균)*0.3)+(7일이내 신규 유닛의 경우: 0.5) *100
         두번째 컴포넌트 알고리즘 : (공간에 속한 유닛들의 총 예약건수 * 0.7 + (공간에 속한 유닛들의 리뷰의 평균)*0.3)+(7일이내 신규 공간의 경우: 0.5) *100
         세번째 컴포넌트 알고리즘 : (워크앤스테이라는 타입의 유닛의 총 예약건수 * 0.7 + (워크앤스테이라는 타입의 유닛의 리뷰의 평균)*0.3)+(7일이내 신규 워크앤스테이의 경우: 0.5) *100
-        `,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_mainPage.png`},{name:`WorkStayRepositoryImpl.java`,type:`java`,code:`@Override
+        `,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_mainPage.png`},{name:`워크앤스테이 상세.java`,type:`java`,code:`@Override
     public StationDetailRespDto selectWorkStayDetailDashBoard(Long no, Long memberNo) {
         // 1. 기본 정보 및 대표 이미지 조회 (Tuple)
         Tuple tuple = fetchWorkStayBasicInfo(no, memberNo);
@@ -331,7 +331,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 
           유닛의 상태(검수/운영) 필드를 도입하여 데이터 생명주기를 관리합니다. 
           특히, 검수 대기 상태에서는 수정 버튼을 조건부 렌더링하여 관리자의 승인 전 수정 시도를 방지하고 안정적인 운영을 유도했습니다.
-        `},{name:`HostPlaceRepositoryImpl.java`,type:`java`,code:`@Override
+        `},{name:`검수상세 페이지.java`,type:`java`,code:`@Override
     public ApprovalDetailRespDto findWorkStayDetail(Long no) {
         // 1. 해당 워케이션에 대한 가장 최신 '대기중(P)'인 HOST_PLACE ID 서브쿼리
         var latestPendingHostPlaceIdSubQuery = JPAExpressions
@@ -422,7 +422,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 
 ## 성능 최적화 및 데이터 조회 관련
 
-### 좋았던 점 (성과 어필)
+### 좋았던 점
 - 대용량 데이터 환경에서 조회 속도 저하 문제를 해결하기 위해 **Redis를 활용한 캐싱** 전략과 **데이터베이스 인덱스 튜닝**을 도입하여 쿼리 성능을 획기적으로 개선하는 값진 경험을 했습니다.
 - 실행 계획(EXPLAIN)을 분석하여 병목이 생기는 테이블에 적절한 복합 인덱스를 설정하고, 자주 조회되는 정적 데이터는 캐시 레이어로 분리함으로써 DB 뷰(View) 및 복잡한 조건 검색의 응답 시간을 최대 수십 배 이상 단축했습니다.
 
@@ -499,7 +499,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 
 ## 깨달은 점 
 무조건적인 실시간 조회가 정답이 아니며, **서비스의 비즈니스 도메인 특성에 맞춰 데이터 정합성과 성능 사이의 트레이드오프(Trade-Off)를 
-올바르게 조율하는 것이 백엔드 개발자의 핵심 역량**임을 깊이 깨닫게 된 뜻깊은 트러블슈팅 경험이었습니다.`,desc:`Sloway 프로젝트의 트러블슈팅 내용입니다.`}]},{title:`Task-Flow`,files:[{name:`AuthInterceptor.java`,type:`java`,code:`//project업데이트
+올바르게 조율하는 것이 백엔드 개발자의 핵심 역량**임을 깊이 깨닫게 된 뜻깊은 트러블슈팅 경험이었습니다.`,desc:`Sloway 프로젝트의 트러블슈팅 내용입니다.`}]},{title:`Task-Flow`,files:[{name:`프로젝트 업데이트.java`,type:`java`,code:`//project업데이트
         @Transactional
     public int update(ProjVo projVo, ProjEmplVo projEmplVo, ProjDeptVo projDeptVo, ProjScheVo projScheVo) {
 
@@ -575,7 +575,108 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
             throw new IllegalArgumentException("[PROJ-306] Project_EMPL INSERT Error");
         }
         return result;
-    }`,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MainPage.png`,desc:`인증 관리`},{name:`ProjectService.java`,type:`java`,code:`...`,desc:`프로젝트 관리`},{name:`Milestone.js`,type:`js`,code:`...`,desc:`일정 관리`},{name:`CheckList.js`,type:`js`,code:`...`,desc:`체크리스트`},{name:`회고.md`,type:`md`,code:`회고...`,desc:`회고`},{name:`트러블슈팅.md`,type:`md`,code:`해결...`,desc:`권한 최적화`}]},{title:`Trip-Tracks`,files:[{name:`ChatController.java`,type:`java`,code:`...`,desc:`채팅 관리`},{name:`RouteService.java`,type:`java`,code:`...`,desc:`경로 관리`},{name:`Socket.js`,type:`js`,code:`...`,desc:`실시간 통신`},{name:`Map.js`,type:`js`,code:`...`,desc:`지도 API`},{name:`회고.md`,type:`md`,code:`회고...`,desc:`회고`},{name:`트러블슈팅.md`,type:`md`,code:`해결...`,desc:`네트워크 설정`}]}],od=e=>e.endsWith(`.java`)?(0,Z.jsx)(nd,{style:{color:`#e66a05`,fontSize:`15px`}}):e.endsWith(`.js`)?(0,Z.jsx)(td,{style:{color:`#f1e05a`,fontSize:`15px`}}):e.endsWith(`.sql`)?(0,Z.jsx)(Ku,{style:{color:`#e38c00`,fontSize:`15px`}}):e.endsWith(`.md`)?(0,Z.jsx)(Vu,{style:{color:`#007acc`,fontSize:`15px`}}):(0,Z.jsx)(Gu,{style:{color:`#cccccc`,fontSize:`15px`}});function sd(){let[e,t]=(0,v.useState)(ad[0].title),[n,r]=(0,v.useState)(ad[0].files[0]),[i,a]=(0,v.useState)(!0),[o,s]=(0,v.useState)(``),[c,l]=(0,v.useState)({Sloway:!0,"Task-Flow":!0,"Trip-Tracks":!0}),u=e=>l(t=>({...t,[e]:!t[e]})),d=(e,n)=>{t(e),r(n)};return(0,v.useEffect)(()=>{s(``);let e=0,t=n.desc||`설명이 없습니다.`,r=setInterval(()=>{s(t.slice(0,e)),e++,e>t.length&&clearInterval(r)},.1);return()=>clearInterval(r)},[n]),(0,Z.jsxs)(cd,{children:[(0,Z.jsx)(id,{}),(0,Z.jsxs)(ld,{children:[(0,Z.jsxs)(`div`,{className:`menus`,children:[(0,Z.jsx)(`img`,{src:`https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg`,alt:`vscode`,className:`logo`}),(0,Z.jsx)(`span`,{children:`File`}),(0,Z.jsx)(`span`,{children:`Edit`}),(0,Z.jsx)(`span`,{children:`Selection`}),(0,Z.jsx)(`span`,{children:`View`}),(0,Z.jsx)(`span`,{children:`Go`}),(0,Z.jsx)(`span`,{children:`Run`}),(0,Z.jsx)(`span`,{children:`Terminal`}),(0,Z.jsx)(`span`,{children:`Help`})]}),(0,Z.jsxs)(`div`,{className:`title`,children:[n.name,` - Portfolio Workspace - Visual Studio Code`]}),(0,Z.jsxs)(`div`,{className:`controls`,children:[(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Ju,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Yu,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn close`,children:(0,Z.jsx)(Xu,{})})]})]}),(0,Z.jsxs)(ud,{children:[(0,Z.jsxs)(dd,{children:[(0,Z.jsx)(`div`,{className:`icon active`,title:`Explorer`,children:(0,Z.jsx)(Wu,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Search`,children:(0,Z.jsx)(Bu,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Source Control`,children:(0,Z.jsx)(Ru,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Extensions`,children:(0,Z.jsx)(X,{})}),(0,Z.jsx)(`div`,{className:`spacer`}),(0,Z.jsx)(`div`,{className:`icon`,title:`Accounts`,children:(0,Z.jsx)(ed,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Manage`,children:(0,Z.jsx)(zu,{})})]}),(0,Z.jsxs)(fd,{children:[(0,Z.jsx)(pd,{children:`EXPLORER`}),(0,Z.jsx)(md,{children:`∨ PORTFOLIO WORKSPACE`}),(0,Z.jsx)(`div`,{className:`file-tree`,children:ad.map(e=>(0,Z.jsxs)(`div`,{children:[(0,Z.jsxs)(hd,{onClick:()=>u(e.title),children:[(0,Z.jsx)(`span`,{className:`arrow`,children:c[e.title]?(0,Z.jsx)(Qu,{}):(0,Z.jsx)(Zu,{})}),(0,Z.jsx)(`span`,{className:`folder-icon`,children:c[e.title]?(0,Z.jsx)(Uu,{style:{color:`#dcb67a`}}):(0,Z.jsx)(Hu,{style:{color:`#dcb67a`}})}),e.title]}),c[e.title]&&e.files.map(t=>(0,Z.jsxs)(gd,{active:n.name===t.name,onClick:()=>d(e.title,t),children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:od(t.name)}),` `,t.name]},t.name))]},e.title))})]}),(0,Z.jsxs)(_d,{children:[(0,Z.jsxs)(vd,{children:[(0,Z.jsx)(`div`,{className:`tabs-wrapper`,children:(0,Z.jsxs)(yd,{active:!0,children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:od(n.name)}),(0,Z.jsx)(`span`,{className:`f-name`,children:n.name}),(0,Z.jsx)(`span`,{className:`f-close`,children:(0,Z.jsx)(qu,{})})]})}),n.img&&(0,Z.jsx)(Q,{children:(0,Z.jsxs)(bd,{onClick:()=>a(!i),title:`Toggle Split View`,children:[(0,Z.jsx)(Lu,{style:{fontSize:`16px`,marginRight:`5px`}}),i?`코드 닫기`:`코드 열기`]})})]}),(0,Z.jsxs)(xd,{children:[(0,Z.jsx)(`span`,{children:`Portfolio Workspace`}),` > `,(0,Z.jsx)(`span`,{children:e}),` `,`> `,(0,Z.jsx)(`span`,{children:n.name})]}),(0,Z.jsxs)(Sd,{children:[n.img&&(0,Z.jsx)(Cd,{isCodeOpen:i,children:(0,Z.jsx)(`img`,{src:n.img,alt:`preview`})}),(i||!n.img)&&(0,Z.jsx)(wd,{hasImage:!!n.img,children:(0,Z.jsx)(bu,{language:n.type===`java`?`java`:n.type===`SQL`?`sql`:n.type===`markdown`?`markdown`:`javascript`,style:xu,showLineNumbers:!0,wrapLines:!0,customStyle:{background:`transparent`,margin:0,padding:`15px 20px`,fontSize:`14px`,lineHeight:`1.5`},children:n.code})})]}),(0,Z.jsxs)(Td,{children:[(0,Z.jsxs)(Ed,{children:[(0,Z.jsx)(`span`,{className:`inactive`,children:`PROBLEMS`}),(0,Z.jsx)(`span`,{className:`inactive`,children:`OUTPUT`}),(0,Z.jsx)(`span`,{className:`inactive`,children:`DEBUG CONSOLE`}),(0,Z.jsxs)(`span`,{className:`active`,children:[(0,Z.jsx)(Iu,{style:{verticalAlign:`middle`,marginRight:`4px`}}),`TERMINAL`]})]}),(0,Z.jsxs)(Dd,{children:[(0,Z.jsxs)(`div`,{className:`prompt`,children:[(0,Z.jsx)(`span`,{className:`path`,children:`portfolio@macbook`}),` `,(0,Z.jsx)(`span`,{className:`colon`,children:`:`}),` `,(0,Z.jsxs)(`span`,{className:`dir`,children:[`~/`,e]}),`$ ./explain.sh`,` `,n.name]}),(0,Z.jsxs)(`div`,{className:`output`,children:[o,(0,Z.jsx)(`span`,{className:`cursor`,children:`█`})]})]})]})]})]}),(0,Z.jsxs)(Od,{children:[(0,Z.jsxs)(`div`,{className:`left`,children:[(0,Z.jsx)(`span`,{className:`item remote`,children:`><`}),(0,Z.jsxs)(`span`,{className:`item`,children:[(0,Z.jsx)(Ru,{style:{verticalAlign:`middle`,marginRight:`4px`}}),`main*`]}),(0,Z.jsx)(`span`,{className:`item`,children:`❌ 0 ⚠️ 0`})]}),(0,Z.jsxs)(`div`,{className:`right`,children:[(0,Z.jsx)(`span`,{className:`item`,children:`Ln 1, Col 1`}),(0,Z.jsx)(`span`,{className:`item`,children:`Spaces: 2`}),(0,Z.jsx)(`span`,{className:`item`,children:`UTF-8`}),(0,Z.jsx)(`span`,{className:`item`,children:(n.type||``).toUpperCase()}),(0,Z.jsx)(`span`,{className:`item`,children:`Prettier ✅`}),(0,Z.jsx)(`span`,{className:`item`,children:(0,Z.jsx)($u,{})})]})]})]})}var cd=qn.div`
+    }`,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MainPage.png`,desc:`프로젝트를 업데이트하기 위한 페이지입니다.
+          프로젝트 고유변호인 no값을 통한 조회로 유효성을 체크한 후, Project테이블의 정보들을 수정하고, 담당하는 부서를 변경합니다.
+          프로젝트 일정도 삭제 후 재삽입 방식으로 갱신하며, 담당자를 지정하기위해 다대다 관계의 중계테이블을 참조하여 담당자 정보를 체크하여 수정합니다.
+        `},{name:`마일스톤 상세조회.sql`,type:`sql`,code:`@Select("""
+                SELECT DISTINCT
+                    M.NO
+                    ,M.SCHE_NO       AS scheno
+                    ,M.TITLE
+                    ,M.CONTENT
+                    ,M.LABEL
+                    ,M.STATE
+                    ,M.START_DATE    AS startDate
+                    ,M.END_DATE      AS endDate
+                    ,M.FOLLOWER_NO   AS followerNo
+                    ,EM.NAME         AS followerName
+                    ,PEME.NO         AS mileEmplNo
+                    ,PEME.NAME       AS mileEmplName
+                    ,PEPE.NO         AS projEmplNo   
+                    ,PEPE.NAME       AS projEmplName
+                FROM MILE M
+                    LEFT JOIN EMPL EM
+                        ON EM.NO = M.FOLLOWER_NO
+                    INNER JOIN PROJ_EMPL PEM
+                        ON PEM.MILE_NO = M.NO
+                        AND PEM.IS_WRITER_YN = 'Y'
+                            INNER JOIN EMPL PEME
+                                ON PEME.NO = PEM.EMPL_NO
+                    LEFT JOIN PROJ_EMPL PEP
+                        ON PEP.PROJ_NO = #{projNo}
+                        AND PEP.IS_MANAGER_YN = 'Y'
+                            INNER JOIN EMPL PEPE
+                                ON PEPE.NO = PEP.EMPL_NO
+                WHERE M.DEL_AT IS NULL
+                    AND M.NO = #{no}
+            """)
+    MileVo selectMileDetail(String projNo, String no);`,desc:`마일스톤 상세 조회를 위한 핵심 쿼리입니다.
+  마일스톤과 담당 부서, 프로젝트 간의 데이터 무결성을 보장하기 위해 핵심 식별자 기반의 INNER JOIN 구조를 명확히 설계했습니다.
+  담당자 정보 누락 없이 정확한 비즈니스 데이터를 결합하는 것을 최우선으로 고려했으며, 
+  불필요한 Full Scan을 방지하고 조인 연산의 효율성을 극대화하기 위해 인덱스를 고려한 결합 조건을 적용했습니다.
+        `,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MileStonePage.png`},{name:`Task_Flow_회고.md`,type:`md`,code:`# 프로젝트 회고
+
+## 프로젝트 기간 및 일정 관리 회고
+- **아쉬웠던 점:** 프로젝트 기간이 짧아 기획했던 모든 기능을 완벽하게 구현하는 데 어려움이 있었습니다. 
+    특히 기능 간의 의존성을 사전에 면밀히 파악하지 못해 병목 현상이 발생했고, 이로 인해 팀원 간 구현 타이밍이 어긋나는 등 전체적인 완성도 측면에서 아쉬움이 남습니다.
+- **배운 점:** 공동의 목표를 달성하기 위해 각자의 역할을 수행하며, 팀원들과 끊임없이 피드백을 교환하고 소통하는 과정의 중요성을 체득했습니다.
+
+## 향후 개선 및 다짐
+1. **체계적인 마일스톤 관리:** 기획 단계에서부터 기능 간의 선후 관계를 명확히 정의하고, 구현 순서에 우선순위를 부여하여 리스크를 최소화하겠습니다.
+2. **주도적인 소통과 협업:** 중간 점검을 생활화하고 API/데이터 명세를 세밀하게 정의하여 싱크가 어긋나는 타이밍을 최소화하겠습니다.
+3. **책임감 있는 개발자:** 이번 경험을 자양분 삼아, 앞으로는 더욱 체계적인 일정 관리와 주도적인 자세로 팀의 목표를 향해 기여하는 개발자로 성장하겠습니다.
+
+---
+
+## 💡 회고를 마치며
+단순한 기능 구현을 넘어 시간 관리와 협업의 가치를 깊이 깨달은 소중한 시간이었습니다. 이번 프로젝트에서 얻은 교훈을 바탕으로, 앞으로 더 단단하고 책임감 있는 개발자가 되겠습니다.
+        `,desc:`Task_Flow 프로젝트에 대한 회고입니다.`},{name:`Task_Flow_트러블슈팅.md`,type:`md`,code:`# 트러블슈팅: 권한 로직 개선을 통한 쿼리 성능 최적화
+
+## 문제 상황
+* **권한 정책의 모호성:** '마일스톤은 담당자만 열람 가능'한 반면 '체크리스트는 누구나 열람 가능'한 상이한 권한 정책이 혼재.
+* **성능 저하 및 병목:** 체크리스트 조회 시 권한 확인을 위해 불필요한 JOIN 연산이 매번 발생.
+* **데이터 정합성 이슈:** 복잡한 권한 검증 로직으로 인해 N+1 문제 발생 위험이 높고, 쿼리 복잡도가 증가함.
+
+## 해결 과정
+* **권한 정책 재정립:** 팀원들과의 기술 협의를 통해 '권한의 일관성'을 우선순위로 설정.
+* **데이터 접근 제어 최적화:** 유저가 생성할 수 있는 데이터의 범위를 프로젝트 및 부서 단위로 명확하게 제한(Scope 정의).
+* **테이블 구조 재설계:** 권한 체크를 위해 복잡하게 얽혀있던 테이블 관계를 단순화하고, 인덱스 활용도가 높은 구조로 데이터 모델링 변경.
+
+## 결과
+* **쿼리 효율성 개선:** 복잡한 권한 JOIN 구조를 단순화하여 조회 쿼리의 응답 속도 향상.
+* **보안성 강화:** 일관된 권한 정책 적용으로 데이터 접근 제어의 안전성 확보.
+* **유지보수 용이성:** 불필요한 N+1 쿼리 위험 요소를 제거하여 코드 가독성 및 유지보수 편의성 증대.`,desc:`Task_Flow프로젝트의 트러블슈팅 내용입니다.`}]},{title:`Trip-Tracks`,files:[{name:`ChatController.java`,type:`java`,code:`...`,desc:`채팅 관리`},{name:`RouteService.java`,type:`java`,code:`...`,desc:`경로 관리`},{name:`Socket.js`,type:`js`,code:`...`,desc:`실시간 통신`},{name:`Map.js`,type:`js`,code:`...`,desc:`지도 API`},{name:`Trip_Tracks_회고.md`,type:`md`,code:`# 프로젝트를 마치며: 학습과 협업의 조화
+
+## 새로운 도전을 통한 성장
+이번 프로젝트는 저에게 있어 첫 번째 장기 프로젝트이자 도전의 연속이었습니다. 단순히 기존에 알고 있던 지식을 활용하는 것에 그치지 않고, 
+매 순간 새로운 기술을 탐구하고 실무에 적용하는 '공부하며 구현하는' 개발 과정을 경험했습니다.
+
+특히 처음 접해보는 **Node.js** 환경에서 백엔드 작업을 진행하며, **express-session**을 활용한 세션 관리 로직을 직접 구현해 보는 등 기술적 스펙트럼을 넓힐 수 있는 값진 시간이었습니다. 
+낯선 기술을 마주했을 때 끝까지 포기하지 않고 레퍼런스를 서칭하며 스스로 문제 해결 능력을 키워나간 경험은 개발자로서 한 단계 성장하는 계기가 되었습니다.
+
+## 최고의 팀워크와 기능 분배
+무엇보다 이번 프로젝트에서 가장 자랑하고 싶은 점은 우리 팀의 화합입니다. 서로 다른 의견을 조율하는 과정에서도 팀원들 간의 신뢰가 두터워 기능 분배와 개발 우선순위 결정이 매우 원활하게 이루어졌습니다.
+* **원활한 소통:** 팀원들 간의 유대감이 좋아 막히는 부분이 있을 때 언제든 자유롭게 질문하고 피드백을 주고받을 수 있는 환경이 조성되었습니다.
+* **효율적인 기능 분배:** 각자의 강점을 살린 기능 분배를 통해 프로젝트의 속도와 완성도를 동시에 잡을 수 있었습니다.
+서로를 배려하며 시너지를 만들어가는 협업의 즐거움을 깨달았으며, 이러한 팀 분위기 덕분에 장기 프로젝트임에도 끝까지 즐겁게 완주할 수 있었습니다.
+
+---
+이번 프로젝트는 저에게 기술적인 성취감뿐만 아니라, **'함께 만드는 가치'**가 무엇인지 알려준 소중한 기회였습니다. 이번에 배운 Node.js 기반의 백엔드 역량과 협업의 노하우를 발판 삼아,
+ 앞으로 어떤 프로젝트에서도 팀의 생산성을 높이는 주도적인 개발자가 되겠습니다.`,desc:`회고`},{name:`Trip_Tracks_트러블슈팅.md`,type:`md`,code:`# 트러블슈팅: SSH 인증 및 네트워크 방화벽 이슈 해결
+
+## 문제 상황
+* **SSH 프로세스 이해 부족:** 배포 환경에서 팀원 전원이 SSH 인증 메커니즘에 대한 미숙지로 인해 서버 접근이 불가능한 상황 발생.
+* **배포 지연:** 개발 환경에서 배포 환경으로 넘어가는 과정에서 네트워크 통신 차단으로 인해 개발 업무 전체가 중단되는 병목 현상 발생.
+
+## 해결 과정
+* **프로토콜 및 정책 분석:** SSH 프로토콜의 인증 방식과 네트워크 방화벽 정책을 정밀하게 리서치.
+* **방화벽 인프라 최적화:** 서버 인바운드 및 아웃바운드 포트 정책을 보안 지침에 맞춰 재구성.
+* **SSH 키 관리 체계 수립:** 서버 접속을 위한 권한 관리 가이드라인 및 안전한 키 배포 방안 마련.
+
+## 결과
+* **운영 환경 정상화:** 팀원 전원의 서버 접속 문제를 해결하여 즉시 배포 가능한 환경 구축.
+* **팀 기술 자산화:** SSH 접속 가이드 및 방화벽 설정 매뉴얼을 작성하여 팀 내부 메신저에 배포, 향후 발생 가능한 유사 이슈에 대한 대응력 확보.
+* **운영 효율성 증대:** 기술 문서 공유를 통해 팀원들의 인프라 이해도를 높이고, 인프라 이슈로 인한 커뮤니케이션 리소스 대폭 절감.`,desc:`Trip_Tracks의 트러블 슈팅 내용입니다.`}]}],od=e=>e.endsWith(`.java`)?(0,Z.jsx)(nd,{style:{color:`#e66a05`,fontSize:`15px`}}):e.endsWith(`.js`)?(0,Z.jsx)(td,{style:{color:`#f1e05a`,fontSize:`15px`}}):e.endsWith(`.sql`)?(0,Z.jsx)(Ku,{style:{color:`#e38c00`,fontSize:`15px`}}):e.endsWith(`.md`)?(0,Z.jsx)(Vu,{style:{color:`#007acc`,fontSize:`15px`}}):(0,Z.jsx)(Gu,{style:{color:`#cccccc`,fontSize:`15px`}});function sd(){let[e,t]=(0,v.useState)(ad[0].title),[n,r]=(0,v.useState)(ad[0].files[0]),[i,a]=(0,v.useState)(!0),[o,s]=(0,v.useState)(``),[c,l]=(0,v.useState)({Sloway:!0,"Task-Flow":!0,"Trip-Tracks":!0}),u=e=>l(t=>({...t,[e]:!t[e]})),d=(e,n)=>{t(e),r(n)};return(0,v.useEffect)(()=>{s(``);let e=0,t=n.desc||`설명이 없습니다.`,r=setInterval(()=>{s(t.slice(0,e)),e+=5,e>t.length+5&&(s(t),clearInterval(r))},10);return()=>clearInterval(r)},[n]),(0,Z.jsxs)(cd,{children:[(0,Z.jsx)(id,{}),(0,Z.jsxs)(ld,{children:[(0,Z.jsxs)(`div`,{className:`menus`,children:[(0,Z.jsx)(`img`,{src:`https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg`,alt:`vscode`,className:`logo`}),(0,Z.jsx)(`span`,{children:`File`}),(0,Z.jsx)(`span`,{children:`Edit`}),(0,Z.jsx)(`span`,{children:`Selection`}),(0,Z.jsx)(`span`,{children:`View`}),(0,Z.jsx)(`span`,{children:`Go`}),(0,Z.jsx)(`span`,{children:`Run`}),(0,Z.jsx)(`span`,{children:`Terminal`}),(0,Z.jsx)(`span`,{children:`Help`})]}),(0,Z.jsxs)(`div`,{className:`title`,children:[n.name,` - Portfolio Workspace - Visual Studio Code`]}),(0,Z.jsxs)(`div`,{className:`controls`,children:[(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Ju,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Yu,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn close`,children:(0,Z.jsx)(Xu,{})})]})]}),(0,Z.jsxs)(ud,{children:[(0,Z.jsxs)(dd,{children:[(0,Z.jsx)(`div`,{className:`icon active`,title:`Explorer`,children:(0,Z.jsx)(Wu,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Search`,children:(0,Z.jsx)(Bu,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Source Control`,children:(0,Z.jsx)(Ru,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Extensions`,children:(0,Z.jsx)(X,{})}),(0,Z.jsx)(`div`,{className:`spacer`}),(0,Z.jsx)(`div`,{className:`icon`,title:`Accounts`,children:(0,Z.jsx)(ed,{})}),(0,Z.jsx)(`div`,{className:`icon`,title:`Manage`,children:(0,Z.jsx)(zu,{})})]}),(0,Z.jsxs)(fd,{children:[(0,Z.jsx)(pd,{children:`EXPLORER`}),(0,Z.jsx)(md,{children:`∨ PORTFOLIO WORKSPACE`}),(0,Z.jsx)(`div`,{className:`file-tree`,children:ad.map(e=>(0,Z.jsxs)(`div`,{children:[(0,Z.jsxs)(hd,{onClick:()=>u(e.title),children:[(0,Z.jsx)(`span`,{className:`arrow`,children:c[e.title]?(0,Z.jsx)(Qu,{}):(0,Z.jsx)(Zu,{})}),(0,Z.jsx)(`span`,{className:`folder-icon`,children:c[e.title]?(0,Z.jsx)(Uu,{style:{color:`#dcb67a`}}):(0,Z.jsx)(Hu,{style:{color:`#dcb67a`}})}),e.title]}),c[e.title]&&e.files.map(t=>(0,Z.jsxs)(gd,{active:n.name===t.name,onClick:()=>d(e.title,t),children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:od(t.name)}),` `,t.name]},t.name))]},e.title))})]}),(0,Z.jsxs)(_d,{children:[(0,Z.jsxs)(vd,{children:[(0,Z.jsx)(`div`,{className:`tabs-wrapper`,children:(0,Z.jsxs)(yd,{active:!0,children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:od(n.name)}),(0,Z.jsx)(`span`,{className:`f-name`,children:n.name}),(0,Z.jsx)(`span`,{className:`f-close`,children:(0,Z.jsx)(qu,{})})]})}),n.img&&(0,Z.jsx)(Q,{children:(0,Z.jsxs)(bd,{onClick:()=>a(!i),title:`Toggle Split View`,children:[(0,Z.jsx)(Lu,{style:{fontSize:`16px`,marginRight:`5px`}}),i?`코드 닫기`:`코드 열기`]})})]}),(0,Z.jsxs)(xd,{children:[(0,Z.jsx)(`span`,{children:`Portfolio Workspace`}),` > `,(0,Z.jsx)(`span`,{children:e}),` `,`> `,(0,Z.jsx)(`span`,{children:n.name})]}),(0,Z.jsxs)(Sd,{children:[n.img&&(0,Z.jsx)(Cd,{isCodeOpen:i,children:(0,Z.jsx)(`img`,{src:n.img,alt:`preview`})}),(i||!n.img)&&(0,Z.jsx)(wd,{hasImage:!!n.img,children:(0,Z.jsx)(bu,{language:n.type===`java`?`java`:n.type===`SQL`?`sql`:n.type===`markdown`?`markdown`:`javascript`,style:xu,showLineNumbers:!0,wrapLines:!0,customStyle:{background:`transparent`,margin:0,padding:`15px 20px`,fontSize:`14px`,lineHeight:`1.5`},children:n.code})})]}),(0,Z.jsxs)(Td,{children:[(0,Z.jsxs)(Ed,{children:[(0,Z.jsx)(`span`,{className:`inactive`,children:`PROBLEMS`}),(0,Z.jsx)(`span`,{className:`inactive`,children:`OUTPUT`}),(0,Z.jsx)(`span`,{className:`inactive`,children:`DEBUG CONSOLE`}),(0,Z.jsxs)(`span`,{className:`active`,children:[(0,Z.jsx)(Iu,{style:{verticalAlign:`middle`,marginRight:`4px`}}),`TERMINAL`]})]}),(0,Z.jsxs)(Dd,{children:[(0,Z.jsxs)(`div`,{className:`prompt`,children:[(0,Z.jsx)(`span`,{className:`path`,children:`portfolio@macbook`}),` `,(0,Z.jsx)(`span`,{className:`colon`,children:`:`}),` `,(0,Z.jsxs)(`span`,{className:`dir`,children:[`~/`,e]}),`$ ./explain.sh`,` `,n.name]}),(0,Z.jsxs)(`div`,{className:`output`,children:[o,(0,Z.jsx)(`span`,{className:`cursor`,children:`█`})]})]})]})]})]}),(0,Z.jsxs)(Od,{children:[(0,Z.jsxs)(`div`,{className:`left`,children:[(0,Z.jsx)(`span`,{className:`item remote`,children:`><`}),(0,Z.jsxs)(`span`,{className:`item`,children:[(0,Z.jsx)(Ru,{style:{verticalAlign:`middle`,marginRight:`4px`}}),`main*`]}),(0,Z.jsx)(`span`,{className:`item`,children:`❌ 0 ⚠️ 0`})]}),(0,Z.jsxs)(`div`,{className:`right`,children:[(0,Z.jsx)(`span`,{className:`item`,children:`Ln 1, Col 1`}),(0,Z.jsx)(`span`,{className:`item`,children:`Spaces: 2`}),(0,Z.jsx)(`span`,{className:`item`,children:`UTF-8`}),(0,Z.jsx)(`span`,{className:`item`,children:(n.type||``).toUpperCase()}),(0,Z.jsx)(`span`,{className:`item`,children:`Prettier ✅`}),(0,Z.jsx)(`span`,{className:`item`,children:(0,Z.jsx)($u,{})})]})]})]})}var cd=qn.div`
   display: flex;
   flex-direction: column;
   height: 100vh;
