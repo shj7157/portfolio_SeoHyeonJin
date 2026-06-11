@@ -48,7 +48,7 @@ const projects = [
     title: "Sloway",
     files: [
       {
-        name: "V1__create_place_summary_view.sql",
+        name: "통계 알고리즘.sql",
         type: "SQL",
         code: `-- 기존에 테이블이 있다면 삭제
 DROP TABLE IF EXISTS place_summary;
@@ -126,7 +126,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
       },
 
       {
-        name: "WorkStayRepositoryImpl.java",
+        name: "워크앤스테이 상세.java",
         type: "java",
         code: `@Override
     public StationDetailRespDto selectWorkStayDetailDashBoard(Long no, Long memberNo) {
@@ -364,7 +364,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
         `,
       },
       {
-        name: "HostPlaceRepositoryImpl.java",
+        name: "검수상세 페이지.java",
         type: "java",
         code: `@Override
     public ApprovalDetailRespDto findWorkStayDetail(Long no) {
@@ -463,7 +463,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 
 ## 성능 최적화 및 데이터 조회 관련
 
-### 좋았던 점 (성과 어필)
+### 좋았던 점
 - 대용량 데이터 환경에서 조회 속도 저하 문제를 해결하기 위해 **Redis를 활용한 캐싱** 전략과 **데이터베이스 인덱스 튜닝**을 도입하여 쿼리 성능을 획기적으로 개선하는 값진 경험을 했습니다.
 - 실행 계획(EXPLAIN)을 분석하여 병목이 생기는 테이블에 적절한 복합 인덱스를 설정하고, 자주 조회되는 정적 데이터는 캐시 레이어로 분리함으로써 DB 뷰(View) 및 복잡한 조건 검색의 응답 시간을 최대 수십 배 이상 단축했습니다.
 
@@ -555,7 +555,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
     title: "Task-Flow",
     files: [
       {
-        name: "AuthInterceptor.java",
+        name: "프로젝트 업데이트.java",
         type: "java",
         code: `//project업데이트
         @Transactional
@@ -581,7 +581,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
         } else {
             updateProjEmpl(projEmplVo, projNo);
         }
-        
+
         return 1;
     }
 
@@ -635,17 +635,76 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
         return result;
     }`,
         img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MainPage.png",
-        desc: "인증 관리",
+        desc: `프로젝트를 업데이트하기 위한 페이지입니다.
+          프로젝트 고유변호인 no값을 통한 조회로 유효성을 체크한 후, Project테이블의 정보들을 수정하고, 담당하는 부서를 변경합니다.
+          프로젝트 일정도 삭제 후 재삽입 방식으로 갱신하며, 담당자를 지정하기위해 다대다 관계의 중계테이블을 참조하여 담당자 정보를 체크하여 수정합니다.
+        `,
       },
       {
-        name: "ProjectService.java",
-        type: "java",
-        code: "...",
-        desc: "프로젝트 관리",
+        name: "마일스톤 상세조회.sql",
+        type: "sql",
+        code: `@Select("""
+                SELECT DISTINCT
+                    M.NO
+                    ,M.SCHE_NO       AS scheno
+                    ,M.TITLE
+                    ,M.CONTENT
+                    ,M.LABEL
+                    ,M.STATE
+                    ,M.START_DATE    AS startDate
+                    ,M.END_DATE      AS endDate
+                    ,M.FOLLOWER_NO   AS followerNo
+                    ,EM.NAME         AS followerName
+                    ,PEME.NO         AS mileEmplNo
+                    ,PEME.NAME       AS mileEmplName
+                    ,PEPE.NO         AS projEmplNo   
+                    ,PEPE.NAME       AS projEmplName
+                FROM MILE M
+                    LEFT JOIN EMPL EM
+                        ON EM.NO = M.FOLLOWER_NO
+                    INNER JOIN PROJ_EMPL PEM
+                        ON PEM.MILE_NO = M.NO
+                        AND PEM.IS_WRITER_YN = 'Y'
+                            INNER JOIN EMPL PEME
+                                ON PEME.NO = PEM.EMPL_NO
+                    LEFT JOIN PROJ_EMPL PEP
+                        ON PEP.PROJ_NO = #{projNo}
+                        AND PEP.IS_MANAGER_YN = 'Y'
+                            INNER JOIN EMPL PEPE
+                                ON PEPE.NO = PEP.EMPL_NO
+                WHERE M.DEL_AT IS NULL
+                    AND M.NO = #{no}
+            """)
+    MileVo selectMileDetail(String projNo, String no);`,
+        desc: `마일스톤 상세 조회를 위한 핵심 쿼리입니다.
+  마일스톤과 담당 부서, 프로젝트 간의 데이터 무결성을 보장하기 위해 핵심 식별자 기반의 INNER JOIN 구조를 명확히 설계했습니다.
+  담당자 정보 누락 없이 정확한 비즈니스 데이터를 결합하는 것을 최우선으로 고려했으며, 
+  불필요한 Full Scan을 방지하고 조인 연산의 효율성을 극대화하기 위해 인덱스를 고려한 결합 조건을 적용했습니다.
+        `,
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MileStonePage.png",
       },
-      { name: "Milestone.js", type: "js", code: "...", desc: "일정 관리" },
-      { name: "CheckList.js", type: "js", code: "...", desc: "체크리스트" },
-      { name: "회고.md", type: "md", code: "회고...", desc: "회고" },
+      {
+        name: "Task_Flow_회고.md",
+        type: "md",
+        code: `# 프로젝트 회고
+
+## 프로젝트 기간 및 일정 관리 회고
+- **아쉬웠던 점:** 프로젝트 기간이 짧아 기획했던 모든 기능을 완벽하게 구현하는 데 어려움이 있었습니다. 
+    특히 기능 간의 의존성을 사전에 면밀히 파악하지 못해 병목 현상이 발생했고, 이로 인해 팀원 간 구현 타이밍이 어긋나는 등 전체적인 완성도 측면에서 아쉬움이 남습니다.
+- **배운 점:** 공동의 목표를 달성하기 위해 각자의 역할을 수행하며, 팀원들과 끊임없이 피드백을 교환하고 소통하는 과정의 중요성을 체득했습니다.
+
+## 향후 개선 및 다짐
+1. **체계적인 마일스톤 관리:** 기획 단계에서부터 기능 간의 선후 관계를 명확히 정의하고, 구현 순서에 우선순위를 부여하여 리스크를 최소화하겠습니다.
+2. **주도적인 소통과 협업:** 중간 점검을 생활화하고 API/데이터 명세를 세밀하게 정의하여 싱크가 어긋나는 타이밍을 최소화하겠습니다.
+3. **책임감 있는 개발자:** 이번 경험을 자양분 삼아, 앞으로는 더욱 체계적인 일정 관리와 주도적인 자세로 팀의 목표를 향해 기여하는 개발자로 성장하겠습니다.
+
+---
+
+## 💡 회고를 마치며
+단순한 기능 구현을 넘어 시간 관리와 협업의 가치를 깊이 깨달은 소중한 시간이었습니다. 이번 프로젝트에서 얻은 교훈을 바탕으로, 앞으로 더 단단하고 책임감 있는 개발자가 되겠습니다.
+        `,
+        desc: "Task_Flow 프로젝트에 대한 회고입니다.",
+      },
       {
         name: "트러블슈팅.md",
         type: "md",
@@ -714,16 +773,22 @@ export default function Portfolio() {
     setFile(f);
   };
 
-  // 터미널 타이핑 효과
   useEffect(() => {
     setTypedDesc("");
     let i = 0;
     const descText = file.desc || "설명이 없습니다.";
+
+    const charStep = 5;
+
     const typingInterval = setInterval(() => {
       setTypedDesc(descText.slice(0, i));
-      i++;
-      if (i > descText.length) clearInterval(typingInterval);
-    }, 15);
+      i += charStep;
+
+      if (i > descText.length + charStep) {
+        setTypedDesc(descText);
+        clearInterval(typingInterval);
+      }
+    }, 10);
 
     return () => clearInterval(typingInterval);
   }, [file]);
