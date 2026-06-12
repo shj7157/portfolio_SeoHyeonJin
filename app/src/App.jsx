@@ -27,6 +27,7 @@ import {
   VscTerminal,
 } from "react-icons/vsc";
 import { FaJava, FaJsSquare } from "react-icons/fa"; // Java, JS 아이콘
+import latex from "./../node_modules/refractor/lang/latex";
 
 // --- [전역 스타일] ---
 const GlobalStyle = createGlobalStyle`
@@ -728,68 +729,68 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
       },
     ],
   },
-  {
-    title: "Trip-Tracks",
-    files: [
-      {
-        name: "ChatController.java",
-        type: "java",
-        code: "...",
-        desc: "채팅 관리",
-      },
-      {
-        name: "RouteService.java",
-        type: "java",
-        code: "...",
-        desc: "경로 관리",
-      },
-      { name: "Socket.js", type: "js", code: "...", desc: "실시간 통신" },
-      { name: "Map.js", type: "js", code: "...", desc: "지도 API" },
-      {
-        name: "Trip_Tracks_회고.md",
-        type: "md",
-        code: `# 프로젝트를 마치며: 학습과 협업의 조화
+  //   {
+  //     title: "Trip-Tracks",
+  //     files: [
+  //       {
+  //         name: "ChatController.java",
+  //         type: "java",
+  //         code: "...",
+  //         desc: "채팅 관리",
+  //       },
+  //       {
+  //         name: "RouteService.java",
+  //         type: "java",
+  //         code: "...",
+  //         desc: "경로 관리",
+  //       },
+  //       { name: "Socket.js", type: "js", code: "...", desc: "실시간 통신" },
+  //       { name: "Map.js", type: "js", code: "...", desc: "지도 API" },
+  //       {
+  //         name: "Trip_Tracks_회고.md",
+  //         type: "md",
+  //         code: `# 프로젝트를 마치며: 학습과 협업의 조화
 
-## 새로운 도전을 통한 성장
-이번 프로젝트는 저에게 있어 첫 번째 장기 프로젝트이자 도전의 연속이었습니다. 단순히 기존에 알고 있던 지식을 활용하는 것에 그치지 않고, 
-매 순간 새로운 기술을 탐구하고 실무에 적용하는 '공부하며 구현하는' 개발 과정을 경험했습니다.
+  // ## 새로운 도전을 통한 성장
+  // 이번 프로젝트는 저에게 있어 첫 번째 장기 프로젝트이자 도전의 연속이었습니다. 단순히 기존에 알고 있던 지식을 활용하는 것에 그치지 않고,
+  // 매 순간 새로운 기술을 탐구하고 실무에 적용하는 '공부하며 구현하는' 개발 과정을 경험했습니다.
 
-특히 처음 접해보는 **Node.js** 환경에서 백엔드 작업을 진행하며, **express-session**을 활용한 세션 관리 로직을 직접 구현해 보는 등 기술적 스펙트럼을 넓힐 수 있는 값진 시간이었습니다. 
-낯선 기술을 마주했을 때 끝까지 포기하지 않고 레퍼런스를 서칭하며 스스로 문제 해결 능력을 키워나간 경험은 개발자로서 한 단계 성장하는 계기가 되었습니다.
+  // 특히 처음 접해보는 **Node.js** 환경에서 백엔드 작업을 진행하며, **express-session**을 활용한 세션 관리 로직을 직접 구현해 보는 등 기술적 스펙트럼을 넓힐 수 있는 값진 시간이었습니다.
+  // 낯선 기술을 마주했을 때 끝까지 포기하지 않고 레퍼런스를 서칭하며 스스로 문제 해결 능력을 키워나간 경험은 개발자로서 한 단계 성장하는 계기가 되었습니다.
 
-## 최고의 팀워크와 기능 분배
-무엇보다 이번 프로젝트에서 가장 자랑하고 싶은 점은 우리 팀의 화합입니다. 서로 다른 의견을 조율하는 과정에서도 팀원들 간의 신뢰가 두터워 기능 분배와 개발 우선순위 결정이 매우 원활하게 이루어졌습니다.
-* **원활한 소통:** 팀원들 간의 유대감이 좋아 막히는 부분이 있을 때 언제든 자유롭게 질문하고 피드백을 주고받을 수 있는 환경이 조성되었습니다.
-* **효율적인 기능 분배:** 각자의 강점을 살린 기능 분배를 통해 프로젝트의 속도와 완성도를 동시에 잡을 수 있었습니다.
-서로를 배려하며 시너지를 만들어가는 협업의 즐거움을 깨달았으며, 이러한 팀 분위기 덕분에 장기 프로젝트임에도 끝까지 즐겁게 완주할 수 있었습니다.
+  // ## 최고의 팀워크와 기능 분배
+  // 무엇보다 이번 프로젝트에서 가장 자랑하고 싶은 점은 우리 팀의 화합입니다. 서로 다른 의견을 조율하는 과정에서도 팀원들 간의 신뢰가 두터워 기능 분배와 개발 우선순위 결정이 매우 원활하게 이루어졌습니다.
+  // * **원활한 소통:** 팀원들 간의 유대감이 좋아 막히는 부분이 있을 때 언제든 자유롭게 질문하고 피드백을 주고받을 수 있는 환경이 조성되었습니다.
+  // * **효율적인 기능 분배:** 각자의 강점을 살린 기능 분배를 통해 프로젝트의 속도와 완성도를 동시에 잡을 수 있었습니다.
+  // 서로를 배려하며 시너지를 만들어가는 협업의 즐거움을 깨달았으며, 이러한 팀 분위기 덕분에 장기 프로젝트임에도 끝까지 즐겁게 완주할 수 있었습니다.
 
----
-이번 프로젝트는 저에게 기술적인 성취감뿐만 아니라, **'함께 만드는 가치'**가 무엇인지 알려준 소중한 기회였습니다. 이번에 배운 Node.js 기반의 백엔드 역량과 협업의 노하우를 발판 삼아,
- 앞으로 어떤 프로젝트에서도 팀의 생산성을 높이는 주도적인 개발자가 되겠습니다.`,
-        desc: "회고",
-      },
-      {
-        name: "Trip_Tracks_트러블슈팅.md",
-        type: "md",
-        code: `# 트러블슈팅: SSH 인증 및 네트워크 방화벽 이슈 해결
+  // ---
+  // 이번 프로젝트는 저에게 기술적인 성취감뿐만 아니라, **'함께 만드는 가치'**가 무엇인지 알려준 소중한 기회였습니다. 이번에 배운 Node.js 기반의 백엔드 역량과 협업의 노하우를 발판 삼아,
+  //  앞으로 어떤 프로젝트에서도 팀의 생산성을 높이는 주도적인 개발자가 되겠습니다.`,
+  //         desc: "회고",
+  //       },
+  //       {
+  //         name: "Trip_Tracks_트러블슈팅.md",
+  //         type: "md",
+  //         code: `# 트러블슈팅: SSH 인증 및 네트워크 방화벽 이슈 해결
 
-## 문제 상황
-* **SSH 프로세스 이해 부족:** 배포 환경에서 팀원 전원이 SSH 인증 메커니즘에 대한 미숙지로 인해 서버 접근이 불가능한 상황 발생.
-* **배포 지연:** 개발 환경에서 배포 환경으로 넘어가는 과정에서 네트워크 통신 차단으로 인해 개발 업무 전체가 중단되는 병목 현상 발생.
+  // ## 문제 상황
+  // * **SSH 프로세스 이해 부족:** 배포 환경에서 팀원 전원이 SSH 인증 메커니즘에 대한 미숙지로 인해 서버 접근이 불가능한 상황 발생.
+  // * **배포 지연:** 개발 환경에서 배포 환경으로 넘어가는 과정에서 네트워크 통신 차단으로 인해 개발 업무 전체가 중단되는 병목 현상 발생.
 
-## 해결 과정
-* **프로토콜 및 정책 분석:** SSH 프로토콜의 인증 방식과 네트워크 방화벽 정책을 정밀하게 리서치.
-* **방화벽 인프라 최적화:** 서버 인바운드 및 아웃바운드 포트 정책을 보안 지침에 맞춰 재구성.
-* **SSH 키 관리 체계 수립:** 서버 접속을 위한 권한 관리 가이드라인 및 안전한 키 배포 방안 마련.
+  // ## 해결 과정
+  // * **프로토콜 및 정책 분석:** SSH 프로토콜의 인증 방식과 네트워크 방화벽 정책을 정밀하게 리서치.
+  // * **방화벽 인프라 최적화:** 서버 인바운드 및 아웃바운드 포트 정책을 보안 지침에 맞춰 재구성.
+  // * **SSH 키 관리 체계 수립:** 서버 접속을 위한 권한 관리 가이드라인 및 안전한 키 배포 방안 마련.
 
-## 결과
-* **운영 환경 정상화:** 팀원 전원의 서버 접속 문제를 해결하여 즉시 배포 가능한 환경 구축.
-* **팀 기술 자산화:** SSH 접속 가이드 및 방화벽 설정 매뉴얼을 작성하여 팀 내부 메신저에 배포, 향후 발생 가능한 유사 이슈에 대한 대응력 확보.
-* **운영 효율성 증대:** 기술 문서 공유를 통해 팀원들의 인프라 이해도를 높이고, 인프라 이슈로 인한 커뮤니케이션 리소스 대폭 절감.`,
-        desc: "Trip_Tracks의 트러블 슈팅 내용입니다.",
-      },
-    ],
-  },
+  // ## 결과
+  // * **운영 환경 정상화:** 팀원 전원의 서버 접속 문제를 해결하여 즉시 배포 가능한 환경 구축.
+  // * **팀 기술 자산화:** SSH 접속 가이드 및 방화벽 설정 매뉴얼을 작성하여 팀 내부 메신저에 배포, 향후 발생 가능한 유사 이슈에 대한 대응력 확보.
+  // * **운영 효율성 증대:** 기술 문서 공유를 통해 팀원들의 인프라 이해도를 높이고, 인프라 이슈로 인한 커뮤니케이션 리소스 대폭 절감.`,
+  //         desc: "Trip_Tracks의 트러블 슈팅 내용입니다.",
+  //       },
+  //     ],
+  //   },
 ];
 const getFileIcon = (name) => {
   if (name.endsWith(".java"))
@@ -803,8 +804,11 @@ const getFileIcon = (name) => {
   return <VscFile style={{ color: "#cccccc", fontSize: "15px" }} />;
 };
 
-// --- [메인 포트폴리오 컴포넌트] ---
 export default function Portfolio() {
+  // 💡 화면 전환 상태: 0 (내 정보), 1 (목차), 2 (VSCode 워크스페이스)
+  const [viewMode, setViewMode] = useState(0);
+
+  // --- [기존 VS Code 상태 관리] ---
   const [activeProject, setActiveProject] = useState(projects[0].title);
   const [file, setFile] = useState(projects[0].files[0]);
   const [isCodeOpen, setIsCodeOpen] = useState(true);
@@ -825,10 +829,11 @@ export default function Portfolio() {
   };
 
   useEffect(() => {
+    if (viewMode !== 2) return; // 워크스페이스 화면일 때만 타이핑 효과 실행
+
     setTypedDesc("");
     let i = 0;
     const descText = file.desc || "설명이 없습니다.";
-
     const charStep = 5;
 
     const typingInterval = setInterval(() => {
@@ -842,8 +847,122 @@ export default function Portfolio() {
     }, 10);
 
     return () => clearInterval(typingInterval);
-  }, [file]);
+  }, [file, viewMode]);
 
+  // ==========================================
+  // 1️⃣ 첫 번째 페이지: 내 정보 (Profile)
+  // ==========================================
+  if (viewMode === 0) {
+    return (
+      <IntroScreen>
+        <div className="content">
+          <h1 className="title">Hello, I'm a Developer.</h1>
+          <p className="subtitle">
+            안정적인 아키텍처 설계와 빠르고 쾌적한 서비스 환경을 끊임없이
+            고민하는 개발자입니다.
+          </p>
+          <button className="next-btn" onClick={() => setViewMode(1)}>
+            포트폴리오 보기 ➔
+          </button>
+        </div>
+      </IntroScreen>
+    );
+  }
+
+  // ==========================================
+  // 2️⃣ 두 번째 페이지: 내 정보 (왼쪽) + 목차 (오른쪽)
+  // ==========================================
+  if (viewMode === 1) {
+    return (
+      <SplitScreen>
+        {/* --- 왼쪽 영역: 내 정보 (이력, 학력, 자격증, 교육 수료) --- */}
+        <LeftPanel>
+          <button className="back-btn" onClick={() => setViewMode(0)}>
+            ⬅️ Back
+          </button>
+
+          <div className="profile-header">
+            <h1 className="name">서현진</h1>
+            <p className="job-title">Backend / Full-Stack Developer</p>
+          </div>
+
+          <div className="info-container">
+            <div className="info-section">
+              <h2 className="section-title">이력 </h2>
+              <div className="info-item">
+                <span className="date">2025.07 - 2025.09</span>
+                <div className="detail">
+                  <div className="title"> 소프트넷 (계약직)</div>
+                  <div className="desc">
+                    솔루션 사업부 기술연구소 연구원 / 요구사항에 따른 유지보수
+                    및 신규개발
+                  </div>
+                  <div className="desc">ERP, 병원MIS프로그램 개발</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <h2 className="section-title"> 학력</h2>
+              <div className="info-item">
+                <span className="date">2020.03 - 2025.02</span>
+                <div className="detail">
+                  <div className="title">부천대학교</div>
+                  <div className="desc">컴퓨터 소프트웨어 학과</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <h2 className="section-title"> 자격증 </h2>
+              <div className="info-item">
+                <span className="date">2026.06</span>
+                <div className="detail">
+                  <div className="title"> 정보처리산업기사(필기)</div>
+                  <div className="desc">한국산업인력공단</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <h2 className="section-title">교육 수료</h2>
+              <div className="info-item">
+                <span className="date">2025.11 - 2026.06</span>
+                <div className="detail">
+                  <div className="title">
+                    AWS 클라우드 기반 Devops 개발자 양성 과정
+                  </div>
+                  <div className="desc">KH정보교육원</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </LeftPanel>
+
+        {/* --- 오른쪽 영역: 목차 및 입장 버튼 --- */}
+        <RightPanel>
+          <h2 className="toc-title">📁 Project Workspace</h2>
+          <div className="project-list">
+            {projects.map((p, index) => (
+              <div key={p.title} className="project-card">
+                <div className="card-header">
+                  <span className="num">0{index + 1}.</span>
+                  <span className="name">{p.title}</span>
+                </div>
+                <div className="card-desc">
+                  {p.shortDesc || "프로젝트 주요 내용 및 트러블슈팅"}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button className="enter-btn" onClick={() => setViewMode(2)}>
+            코드 워크스페이스 입장하기 ➔
+          </button>
+        </RightPanel>
+      </SplitScreen>
+    );
+  }
   return (
     <Layout>
       <GlobalStyle />
@@ -1073,12 +1192,329 @@ export default function Portfolio() {
   );
 }
 
+const IntroScreen = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%; /* 100vw 대신 100% 사용 권장 */
+  height: 100vh; /* 99vh -> 100vh 로 수정 (위의 GlobalStyle 적용 후) */
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  font-family: "Consolas", "Courier New", monospace;
+  .content {
+    text-align: center;
+    animation: fadeIn 1s ease-in-out;
+  }
+  .title {
+    font-size: 3rem;
+    color: #569cd6; /* VS Code 키워드 블루 */
+    margin-bottom: 20px;
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 40px;
+  }
+  .info-box {
+    background: #252526;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 40px;
+    border: 1px solid #333;
+  }
+  .next-btn {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    background-color: #0e639c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+    &:hover {
+      background-color: #1177bb;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const TocScreen = styled(IntroScreen)`
+  /* IntroScreen의 스타일을 상속받아 재사용 */
+  .content {
+    text-align: left;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh; /* 컨텐츠 박스의 최대 높이 제한 */
+    display: flex;
+    flex-direction: column;
+  }
+  .title {
+    color: #ce9178; /* VS Code 스트링 오렌지 */
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+  }
+  .project-list {
+    list-style: none;
+    padding: 0;
+    overflow-y: auto; /* 프로젝트 목록이 길어지면 이 부분만 스크롤 되도록 설정 */
+    flex: 1;
+    margin: 0;
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 4px;
+    }
+  }
+  .project-item {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: #252526;
+    border-radius: 6px;
+    transition: transform 0.2s;
+    &:hover {
+      transform: translateX(10px);
+      background: #2d2d2d;
+    }
+    .num {
+      color: #b5cea8;
+      margin-right: 15px;
+    } /* 숫자 그린 */
+    .name {
+      color: #4ec9b0;
+      font-weight: bold;
+    } /* 클래스 청록색 */
+    .desc {
+      color: #808080;
+      font-size: 1.1rem;
+    }
+  }
+  .btn-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+  }
+  .prev-btn {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    background-color: transparent;
+    color: #d4d4d4;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    &:hover {
+      background-color: #333;
+    }
+  }
+`;
+
+const SplitScreen = styled.div`
+  display: flex;
+  width: 100%;
+  height: 100vh; /* GlobalStyle에서 margin: 0 적용 필수 */
+  background-color: #1e1e1e;
+  color: #cccccc;
+  font-family: "Pretendard", "Malgun Gothic", sans-serif;
+  overflow: hidden;
+`;
+
+const LeftPanel = styled.div`
+  width: 50%;
+  height: 100%;
+  padding: 40px 50px;
+  background-color: #181818;
+  border-right: 1px solid #333333;
+  overflow-y: auto; /* 내용이 길어지면 왼쪽 영역만 스크롤 */
+  position: relative;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
+
+  .back-btn {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    background: none;
+    border: none;
+    color: #858585;
+    font-size: 1rem;
+    cursor: pointer;
+    &:hover {
+      color: #d4d4d4;
+    }
+  }
+
+  .profile-header {
+    margin-top: 20px;
+    margin-bottom: 40px;
+    .name {
+      font-size: 2.2rem;
+      color: #ffffff;
+      margin-bottom: 5px;
+    }
+    .job-title {
+      font-size: 1.2rem;
+      color: #569cd6; /* VS Code 블루 */
+    }
+  }
+
+  .info-container {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+  }
+
+  .info-section {
+    .section-title {
+      font-size: 1.1rem;
+      color: #ce9178; /* VS Code 오렌지 */
+      border-bottom: 1px solid #333;
+      padding-bottom: 8px;
+      padding-left: 5px;
+      margin-bottom: 15px;
+    }
+
+    .info-item {
+      display: flex;
+      margin-bottom: 15px;
+
+      .date {
+        min-width: 130px;
+        font-size: 0.9rem;
+        color: #b5cea8; /* VS Code 그린 */
+        font-family: "Consolas", monospace;
+      }
+
+      .detail {
+        flex: 1;
+        .title {
+          font-size: 1rem;
+          color: #d4d4d4;
+          font-weight: bold;
+          margin-bottom: 4px;
+          margin-left: 10px;
+        }
+        .desc {
+          font-size: 0.9rem;
+          margin-left: 10px;
+          color: #858585;
+        }
+      }
+    }
+  }
+`;
+
+const RightPanel = styled.div`
+  width: 50%;
+  height: 100%;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  background-color: #1e1e1e;
+
+  .toc-title {
+    font-size: 1.8rem;
+    color: #4ec9b0; /* VS Code 청록색 */
+    margin-bottom: 30px;
+  }
+
+  .project-list {
+    flex: 1;
+    overflow-y: auto; /* 프로젝트가 많아지면 오른쪽 영역만 스크롤 */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-right: 10px;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 4px;
+    }
+  }
+
+  .project-card {
+    background: #252526;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 20px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #2d2d2d;
+      border-color: #569cd6;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+
+      .num {
+        font-size: 1.2rem;
+        color: #858585;
+        font-family: "Consolas", monospace;
+        margin-right: 12px;
+      }
+      .name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #dcdcaa; /* VS Code 옐로우 */
+      }
+    }
+
+    .card-desc {
+      color: #999999;
+      font-size: 0.95rem;
+      padding-left: 35px;
+    }
+  }
+
+  .enter-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background-color: #0e639c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-bottom: 70px;
+    &:hover {
+      background-color: #1177bb;
+    }
+  }
+`;
+
 // --- [스타일 컴포넌트] ---
 const Layout = styled.div`
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+  overflow: hidden;
   background: #1e1e1e;
 `;
 
