@@ -47,6 +47,24 @@ const GlobalStyle = createGlobalStyle`
 const projects = [
   {
     title: "Sloway",
+    shortDesc: [
+      "개인 사용자를 대상으로 한 워케이션 공간 예약 플랫폼",
+      "재택근무, 디지털 노마드, 워라밸 중시 사용자 대상 워케이션 공간 탐색·예약·리뷰·결제 통합 서비스",
+      "일과 휴식의 균형 있는 조화와 업무 효율성 확보 및 사용자 편의성 제공",
+      "담당 역할 : DB관리자",
+      "담당 기능 : 공간, 유닛, 편의시설, 찜, 공간검수, 알림",
+    ],
+    // prettier-ignore
+    techStack: {
+      "OS": "Windows",
+      "Language": "JavaScript, SQL, Java, HTML, CSS",
+      "Framework/Library": "Spring Boot, Spring Security, React, JPA, Redux-Toolkit, Flyway, Styled-components",
+      "Database": "PostgreSQL",
+      "Tool": "PGAdmin, VSCode, IntelliJ, Postman, Swagger, AWS S3",
+      "WAS": "Tomcat",
+      "Collaboration": "Git, SourceTree, Notion, Trello, Figma, ERD-Cloud",
+      "API": "Kakao Map API"
+    },
     files: [
       {
         name: "통계 알고리즘.sql",
@@ -117,7 +135,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
         통계 데이터를 실시간으로 조회를 진행했을 시 최저 24.3초 최대 32.1초 평균값 28.3초가 소요되는 점을 발견했습니다.
         인덱스를 통한 튜닝 진행하여 최저 8.2초 최대 16.8초 평균 12.4초까지 속도를 개선했으나 사용자가 사용하기에 모자라다고 판단하여 캐싱을 진행했습니다.
         데이터베이스의 통계 조회용 테이블을 생성하여 진행하기보다는 통계값을 디스크에 직접 저장하여 조회속도가 더 빠른 materialized view를 활용하여 진행했습니다.
-        스케쥴러를 통해 10분에 한번씩 값이 반영되도록 설계했습니다. 실시간성을 잃지만 조회 속도가 최저 0.24초 최대 0.38초 평균0.31초까지 개선되었습니다.
+        스케쥴러를 통해 10분에 한번씩 값이 반영되도록 설계했습니다. 실시간성을 잃지만 조회 속도가 최저 0.24초 최대 0.48초 평균0.38초까지 개선되었습니다.
 
         첫번째 컴포넌트 알고리즘 : (총 예약건수 * 0.7 + (리뷰의 평균)*0.3)+(7일이내 신규 유닛의 경우: 0.5) *100
         두번째 컴포넌트 알고리즘 : (공간에 속한 유닛들의 총 예약건수 * 0.7 + (공간에 속한 유닛들의 리뷰의 평균)*0.3)+(7일이내 신규 공간의 경우: 0.5) *100
@@ -451,7 +469,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
         desc: `검수 상세 페이지입니다.\n
           클라우드 스토리지 활용: 유닛 이미지 데이터를 AWS S3 Bucket을 통해 관리하여 서버의 부하를 분산하고, 확장성 있는 미디어 처리 인프라를 구축했습니다.
 
-          운영 품질 관리 (Quality Assurance): 검수 과정에서 사진 체크리스트 검증 로직을 강제하여, 호스트가 등록한 공간의 정보가 운영 기준을 충족했는지 체계적으로 확인하도록 설계했습니다.
+          운영 품질 관리: 검수 과정에서 사진 체크리스트 검증 로직을 강제하여, 호스트가 등록한 공간의 정보가 운영 기준을 충족했는지 체계적으로 확인하도록 설계했습니다.
           
           운영 무결성 확보: 모든 체크리스트 항목이 승인 조건에 부합해야만 검수 완료가 가능하도록 로직을 구현하여, 운영 데이터의 품질을 일관되게 유지합니다.
         `,
@@ -465,8 +483,9 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 ## 성능 최적화 및 데이터 조회 관련
 
 ### 좋았던 점
-- 대용량 데이터 환경에서 조회 속도 저하 문제를 해결하기 위해 **Redis를 활용한 캐싱** 전략과 **데이터베이스 인덱스 튜닝**을 도입하여 쿼리 성능을 획기적으로 개선하는 값진 경험을 했습니다.
-- 실행 계획(EXPLAIN)을 분석하여 병목이 생기는 테이블에 적절한 복합 인덱스를 설정하고, 자주 조회되는 정적 데이터는 캐시 레이어로 분리함으로써 DB 뷰(View) 및 복잡한 조건 검색의 응답 시간을 최대 수십 배 이상 단축했습니다.
+- 대용량 데이터 환경에서 조회 속도 저하 문제를 해결하기 위해 **Materialized view를 활용한 캐싱** 전략과 **데이터베이스 인덱스 튜닝**을 도입하여 쿼리 성능을 획기적으로 개선하는 값진 경험을 했습니다.
+- 실행 계획을 분석하여 병목이 생기는 테이블에 적절한 복합 인덱스를 설정하고, 자주 조회되는 정적 데이터는 캐시 레이어로 분리함으로써 DB 뷰 및 복잡한 조건 검색의 응답 시간을
+  평균 28.3초에서 평균 0.4초까지 단축했습니다.
 
 ### 아쉬운 점
 - 초기 아키텍처 설계 단계에서 대용량 데이터 적재 및 고빈도 조회 상황을 정밀하게 예측하지 못해, 프로젝트 중반부에 특정 기능(조회/통계/랭킹 등)에서 심각한 데이터 조회 속도 저하 문제를 겪었습니다.
@@ -511,10 +530,10 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 
 ---
 
-## 2. 원인 분석 (Analysis)
-성능 저하의 원인을 파악하기 위해 문제가 되는 통계 쿼리를 추출하여 **데이터베이스 실행 계획**을 분석했습니다. 
+## 2. 원인 분석
+성능 저하의 원인을 파악하기 위해 문제가 되는 통계 쿼리를 통해 **데이터베이스 실행 계획**을 분석했습니다. 
 
-- **인덱스 부재 및 Full Table Scan:** 수많은 조인과 대규모 데이터 정렬, 그룹화가 복합적으로 일어나는 쿼리였음에도 불구하고,
+- **인덱스 부재 및 전체 테이블 조회 :** 수많은 조인과 대규모 데이터 정렬, 그룹화가 복합적으로 일어나는 쿼리였음에도 불구하고,
     복합 인덱스가 제대로 설정되어 있지 않아 대량의 테이블을 처음부터 끝까지 읽는 Full Table Scan이 발생하고 있었습니다.
 - **실시간 연산의 한계:** 매 요청마다 수백만 건에 달하는 로우를 실시간으로 집계하고 연산하는 구조 자체가 데이터베이스 CPU에 엄청난 과부하를 주고 있었습니다.
 
@@ -524,14 +543,14 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 단번에 구조를 바꾸기보다, 안정성을 위해 데이터베이스 레벨의 튜닝을 먼저 진행한 후 애플리케이션 레이어의 캐싱 전략을 도입하는 2단계 접근 방식을 취했습니다.
 
 ### [1단계] 쿼리 튜닝 및 인덱스 최적화
-- **조치 내용:** \`EXPLAIN\` 분석 결과를 바탕으로, 쿼리 조건절과 그룹화에 자주 사용되는 핵심 컬럼들을 조합하여 **최적의 복합 인덱스**를 설계하고 반영했습니다.
+- **조치 내용:** 분석 결과를 바탕으로, 쿼리 조건절과 그룹화에 자주 사용되는 핵심 컬럼들을 조합하여 **최적의 복합 인덱스**를 설계하고 반영했습니다.
 - **결과:** 인덱스 스캔을 통해 불필요한 디스크 I/O를 대폭 줄였으며, 쿼리 자체의 실행 속도를 **평균 12.4초로 단축**시켰습니다. 
     약 2배 이상의 성능 향상을 이뤄냈으나, 여전히 사용자에게 실시간으로 제공하기에는 무거운 수치였습니다.
 
 ### [2단계] 캐싱 전략 및 데이터 구조화
-- **조치 내용:** 통계 데이터의 특성상 '완벽한 실시간성(초 단위)'보다는 '정확한 주기별 집계(분 단위)'가 더 중요하다는 비즈니스적 판단을 내렸습니다. 
+- **조치 내용:** 통계 데이터의 특성상 '완벽한 실시간성'보다는 '정확한 주기별 집계(분 단위)'가 더 중요하다는 비즈니스적 판단을 내렸습니다. 
     이에 따라 매번 빈번한 대규모 연산을 수행하는 대신, 미리 집계된 데이터를 별도 테이블에 저장해두고 조회하는 **구체화 뷰 패턴**을 도입했습니다.
-- **구현 방식:** **Spring Boot의 Scheduler(\`@Scheduled\`)** 기능을 활용하여, 10분 주기로 백그라운드에서 통계 배치 쿼리가 돌며 집계 테이블을 갱신하도록 아키텍처를 전면 리팩토링했습니다.
+- **구현 방식:** **Spring Boot의 Scheduler** 기능을 활용하여, 10분 주기로 백그라운드에서 통계 배치 쿼리가 돌며 집계 테이블을 갱신하도록 아키텍처를 전면 리팩토링했습니다.
     사용자는 복잡한 연산 없이 배치로 다듬어진 결과 데이터만 즉시 읽어가도록 구조를 변경했습니다.
 
 ---
@@ -539,7 +558,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 ## 4. 최종 성과 및 결과
 두 단계에 걸친 집요한 최적화 결과, 인프라 비용 추가 없이 놀라운 성능 개선을 이루어냈습니다.
 
-- **조회 속도:** 평균 **28.3초 -> 0.31초**로 감소 (**약 98.9%의 성능 향상**)
+- **조회 속도:** 평균 **28.3초 -> 0.38초**로 감소 (**약 98.8%의 성능 향상**)
 - **사용자 경험 극대화:** 무한 로딩에 가깝던 통계 페이지가 클릭과 동시에 화면에 렌더링되는 쾌적한 환경을 구축했습니다.
 - **시스템 안정성 확보:** 데이터베이스의 피크 타임 CPU 점유율을 현저히 낮추어, 다른 핵심 비즈니스 로직(주문, 등록 등)의 트랜잭션 안정성까지 동시에 확보하는 선순환 효과를 낳았습니다.
 
@@ -554,6 +573,20 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
   },
   {
     title: "Task-Flow",
+    shortDesc: [
+      "개발회사를 대상으로 한 프로젝트 일정관리 및 개인 일정관리 웹&앱 페이지 ",
+      "담당 역할 : DB관리자",
+      "담당 기능 : 프로젝트, 마일스톤, 회사, 부서, 계약, 회의실, 로그인체크, 알림",
+    ],
+    // prettier-ignore
+    techStack:{
+    "OS": "Windows",
+  "Language": "JavaScript, SQL, Java, JSP, CSS",
+  "Framework / Library": "Spring Boot, MyBatis, JPA",
+  "DB": "Oracle",
+  "Tool": "SQL Developer, Eclipse, VSCode, IntelliJ, Postman",
+  "WAS": "Tomcat",
+  "Collaboration": "Git, SourceTree, Notion, Trello, Figma, ERD-Cloud"},
     files: [
       {
         name: "프로젝트 업데이트.java",
@@ -712,86 +745,338 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
         code: `# 트러블슈팅: 권한 로직 개선을 통한 쿼리 성능 최적화
 
 ## 문제 상황
-* **권한 정책의 모호성:** '마일스톤은 담당자만 열람 가능'한 반면 '체크리스트는 누구나 열람 가능'한 상이한 권한 정책이 혼재.
-* **성능 저하 및 병목:** 체크리스트 조회 시 권한 확인을 위해 불필요한 JOIN 연산이 매번 발생.
-* **데이터 정합성 이슈:** 복잡한 권한 검증 로직으로 인해 N+1 문제 발생 위험이 높고, 쿼리 복잡도가 증가함.
+* **권한 정책의 모호성:** '마일스톤은 담당자만 열람 가능'한 반면 '체크리스트는 누구나 열람 가능'한 상이한 권한 정책이 혼재했습니다.
+* **성능 저하 및 병목:** 체크리스트 조회 시 권한 확인을 위해 불필요한 JOIN 연산이 매번 발생했습니다.
+* **데이터 정합성 이슈:** 복잡한 권한 검증 로직으로 인해 N+1 문제 발생 위험이 높고, 쿼리 복잡도가 증가했습니다.
 
 ## 해결 과정
-* **권한 정책 재정립:** 팀원들과의 기술 협의를 통해 '권한의 일관성'을 우선순위로 설정.
-* **데이터 접근 제어 최적화:** 유저가 생성할 수 있는 데이터의 범위를 프로젝트 및 부서 단위로 명확하게 제한(Scope 정의).
-* **테이블 구조 재설계:** 권한 체크를 위해 복잡하게 얽혀있던 테이블 관계를 단순화하고, 인덱스 활용도가 높은 구조로 데이터 모델링 변경.
+* **권한 정책 재정립:** 팀원들과의 기술 협의를 통해 '권한의 일관성'을 우선순위로 설정했습니다.
+* **데이터 접근 제어 최적화:** 유저가 생성할 수 있는 데이터의 범위를 프로젝트 및 부서 단위로 명확하게 제한했습니다.
+* **테이블 구조 재설계:** 권한 체크를 위해 복잡하게 얽혀있던 테이블 관계를 단순화하고, 인덱스 활용도가 높은 구조로 데이터 모델링을 변경했습니다.
 
 ## 결과
-* **쿼리 효율성 개선:** 복잡한 권한 JOIN 구조를 단순화하여 조회 쿼리의 응답 속도 향상.
-* **보안성 강화:** 일관된 권한 정책 적용으로 데이터 접근 제어의 안전성 확보.
-* **유지보수 용이성:** 불필요한 N+1 쿼리 위험 요소를 제거하여 코드 가독성 및 유지보수 편의성 증대.`,
+* **쿼리 효율성 개선:** 복잡한 권한 JOIN 구조를 단순화하여 조회 쿼리의 응답 속도를 향상시켰습니다.
+* **보안성 강화:** 일관된 권한 정책 적용으로 데이터 접근 제어의 안전성을 확보했습니다.
+* **유지보수 용이성:** 불필요한 N+1 쿼리 위험 요소를 제거하여 코드 가독성 및 유지보수 편의성을 증대시켰습니다.`,
         desc: "Task_Flow프로젝트의 트러블슈팅 내용입니다.",
       },
     ],
   },
-  //   {
-  //     title: "Trip-Tracks",
-  //     files: [
-  //       {
-  //         name: "ChatController.java",
-  //         type: "java",
-  //         code: "...",
-  //         desc: "채팅 관리",
-  //       },
-  //       {
-  //         name: "RouteService.java",
-  //         type: "java",
-  //         code: "...",
-  //         desc: "경로 관리",
-  //       },
-  //       { name: "Socket.js", type: "js", code: "...", desc: "실시간 통신" },
-  //       { name: "Map.js", type: "js", code: "...", desc: "지도 API" },
-  //       {
-  //         name: "Trip_Tracks_회고.md",
-  //         type: "md",
-  //         code: `# 프로젝트를 마치며: 학습과 협업의 조화
+  {
+    title: "Trip-Tracks",
+    shortDesc: [
+      "여행과 SNS를 결합한 새로운 서비스 ",
+      "여행 경험과 정보를 공유하는 플랫폼",
+      "담당 역할 : 2학기 팀장, 백엔드 개발자, DB관리자",
+      "담당 기능 : 유저, 프로필, 게시글, 다이렉트 메시지, 게시글 좋아요, 유저간 팔로우",
+    ],
+    // prettier-ignore
+    techStack: {
+      "OS": "Windows, macOS",
+      "Frontend": "Vue.js (Vite), Vue Router, Vuex, Axios, Socket.io-client, Vue3-Toastify",
+      "Backend": "Node.js (Express), Express-session, Socket.io",
+      "DB":"Maria-DB",
+      "Infrastructure": "Ubuntu Server, PM2",
+      "API": "Kakao Map API",
+      "Collaboration": "Git, GitHub, Adobe XD, Draw.io"
+    },
+    files: [
+      {
+        name: "메인피드조회페이지.js",
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/Trip_Tracks_MainPage.jpg",
+        type: "js",
+        code: `
+        /**
+ * 코드 최초 작성자: 서현진
+ * 코드 최초 작성일: 2024.10.16.
+ * 코드 설명:
+ * Ambass_Save 테이블에 저장된 게시물 중 최신 게시물 20개와 이미지 경로 및 프로필 이미지 경로를 가져오는 API 스크립트
+ */
+var express = require("express");
+var router = express.Router();
+const DBconn = require("../../utils/DBconn");
 
-  // ## 새로운 도전을 통한 성장
-  // 이번 프로젝트는 저에게 있어 첫 번째 장기 프로젝트이자 도전의 연속이었습니다. 단순히 기존에 알고 있던 지식을 활용하는 것에 그치지 않고,
-  // 매 순간 새로운 기술을 탐구하고 실무에 적용하는 '공부하며 구현하는' 개발 과정을 경험했습니다.
+// Ambass_Save 테이블에 저장된 최신 게시물 20개와 이미지 경로 및 프로필 이미지 경로를 가져오는 API
+router.post("/", async (req, res) => {
+  const { User_ID } = req.session; // 사용자 ID 추출
 
-  // 특히 처음 접해보는 **Node.js** 환경에서 백엔드 작업을 진행하며, **express-session**을 활용한 세션 관리 로직을 직접 구현해 보는 등 기술적 스펙트럼을 넓힐 수 있는 값진 시간이었습니다.
-  // 낯선 기술을 마주했을 때 끝까지 포기하지 않고 레퍼런스를 서칭하며 스스로 문제 해결 능력을 키워나간 경험은 개발자로서 한 단계 성장하는 계기가 되었습니다.
+  let conn;
+  try {
+    conn = await DBconn.getConnection();
 
-  // ## 최고의 팀워크와 기능 분배
-  // 무엇보다 이번 프로젝트에서 가장 자랑하고 싶은 점은 우리 팀의 화합입니다. 서로 다른 의견을 조율하는 과정에서도 팀원들 간의 신뢰가 두터워 기능 분배와 개발 우선순위 결정이 매우 원활하게 이루어졌습니다.
-  // * **원활한 소통:** 팀원들 간의 유대감이 좋아 막히는 부분이 있을 때 언제든 자유롭게 질문하고 피드백을 주고받을 수 있는 환경이 조성되었습니다.
-  // * **효율적인 기능 분배:** 각자의 강점을 살린 기능 분배를 통해 프로젝트의 속도와 완성도를 동시에 잡을 수 있었습니다.
-  // 서로를 배려하며 시너지를 만들어가는 협업의 즐거움을 깨달았으며, 이러한 팀 분위기 덕분에 장기 프로젝트임에도 끝까지 즐겁게 완주할 수 있었습니다.
+    // Ambass_Save 테이블에서 엠버서더가 저장한 최신 게시물 20개 가져오기
+    const selectAmbassPostsQuery = "
+      SELECT 
+        CAST(Post.Post_ID AS CHAR) AS Post_ID, 
+        Post.Post_Title, 
+        Post.Post_Caption, 
+        MIN(Post_Image.Image_Src) AS Image_Src, -- 하나의 이미지 경로만 선택
+        CAST(Post.User_ID AS CHAR) AS User_ID, 
+        User_Info.Profile_Img, 
+        User_Info.User_Rule,
+        IFNULL(CAST(Post_Like.likeCount AS CHAR), '0') AS likeCount,
+        IF(Post_Like_User.User_ID IS NOT NULL, 1, 0) AS isLike
+      FROM Ambass_Save 
+      LEFT JOIN Post ON Ambass_Save.Post_ID = Post.Post_ID 
+      LEFT JOIN Post_Image ON Post.Post_ID = Post_Image.Post_ID 
+      LEFT JOIN User_Info ON Post.User_ID = User_Info.User_ID
+      LEFT JOIN (
+        SELECT Post_ID, COUNT(*) AS likeCount 
+        FROM Post_Like 
+        GROUP BY Post_ID
+      ) AS Post_Like ON Post.Post_ID = Post_Like.Post_ID
+      LEFT JOIN (
+        SELECT Post_ID, User_ID
+        FROM Post_Like
+        WHERE User_ID = ?
+      ) AS Post_Like_User ON Post.Post_ID = Post_Like_User.Post_ID
+      WHERE Ambass_Save.User_ID = ? -- Ambass_Save에서 저장한 사용자 ID 필터링
+      AND User_Info.User_Rule = 1 -- 엠버서더 사용자만 필터링
+      GROUP BY Post.Post_ID -- 각 Post_ID에 대해 중복을 제거
+      ORDER BY Post.Post_ID DESC 
+      LIMIT 20
+    ";
+    const posts = await conn.query(selectAmbassPostsQuery, [User_ID, User_ID]);
 
-  // ---
-  // 이번 프로젝트는 저에게 기술적인 성취감뿐만 아니라, **'함께 만드는 가치'**가 무엇인지 알려준 소중한 기회였습니다. 이번에 배운 Node.js 기반의 백엔드 역량과 협업의 노하우를 발판 삼아,
-  //  앞으로 어떤 프로젝트에서도 팀의 생산성을 높이는 주도적인 개발자가 되겠습니다.`,
-  //         desc: "회고",
-  //       },
-  //       {
-  //         name: "Trip_Tracks_트러블슈팅.md",
-  //         type: "md",
-  //         code: `# 트러블슈팅: SSH 인증 및 네트워크 방화벽 이슈 해결
+    // 이미지 경로 수정 및 로그 기록
+    for (let item of posts) {
+      // 이미지 경로와 프로필 이미지 경로를 서버 URL로 변경
+      item.Profile_Img =
+        "http://triptracks.co.kr/imgserver/" + item.Profile_Img;
+      item.Image_Src = "http://triptracks.co.kr/imgserver/" + item.Image_Src;
 
-  // ## 문제 상황
-  // * **SSH 프로세스 이해 부족:** 배포 환경에서 팀원 전원이 SSH 인증 메커니즘에 대한 미숙지로 인해 서버 접근이 불가능한 상황 발생.
-  // * **배포 지연:** 개발 환경에서 배포 환경으로 넘어가는 과정에서 네트워크 통신 차단으로 인해 개발 업무 전체가 중단되는 병목 현상 발생.
+      // Ambass_Info_Log에 뷰 카운트 증가
+      await conn.query(
+        "INSERT INTO Ambass_Info_Log (User_ID, Year, Month) 
+        VALUES (?, YEAR(NOW()), MONTH(NOW())) 
+        ON DUPLICATE KEY UPDATE 
+          View = View + 1;",
+        [item.User_ID]
+      );
 
-  // ## 해결 과정
-  // * **프로토콜 및 정책 분석:** SSH 프로토콜의 인증 방식과 네트워크 방화벽 정책을 정밀하게 리서치.
-  // * **방화벽 인프라 최적화:** 서버 인바운드 및 아웃바운드 포트 정책을 보안 지침에 맞춰 재구성.
-  // * **SSH 키 관리 체계 수립:** 서버 접속을 위한 권한 관리 가이드라인 및 안전한 키 배포 방안 마련.
+      // Post_Log 테이블에 일간 View 증가 기록
+      await conn.query(
+        "INSERT INTO Post_Log (Post_ID, Log_Date, User_ID, View)
+        VALUES (?, CURDATE(), ?, 1)
+        ON DUPLICATE KEY UPDATE View = View + 1;",
+        [item.Post_ID, item.User_ID]
+      );
+    }
 
-  // ## 결과
-  // * **운영 환경 정상화:** 팀원 전원의 서버 접속 문제를 해결하여 즉시 배포 가능한 환경 구축.
-  // * **팀 기술 자산화:** SSH 접속 가이드 및 방화벽 설정 매뉴얼을 작성하여 팀 내부 메신저에 배포, 향후 발생 가능한 유사 이슈에 대한 대응력 확보.
-  // * **운영 효율성 증대:** 기술 문서 공유를 통해 팀원들의 인프라 이해도를 높이고, 인프라 이슈로 인한 커뮤니케이션 리소스 대폭 절감.`,
-  //         desc: "Trip_Tracks의 트러블 슈팅 내용입니다.",
-  //       },
-  //     ],
-  //   },
+    return res.status(200).json(posts);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "내부 서버 오류가 발생했습니다." });
+  } finally {
+    if (conn) conn.end(); // 연결 종료
+  }
+});
+
+module.exports = router;`,
+        desc: `메인 홈페이지입니다.
+        사용자의 관심사와 엠버서더 활동을 반영한 최신 게시물 20개를 조회하는 기능을 구현했습니다.
+        다중 조인 시 발생할 수 있는 데이터 중복과 성능 저하를 방지하기 위해, 서브쿼리를 활용한 필터링과 GROUP BY를 전략적으로 배치하여 데이터의 무결성을 확보했습니다.
+        또한, 게시물 노출 시마다 실시간 로그를 기록하는 트랜잭션 구조를 설계하여 사용자 통계 데이터의 정확성을 높였습니다.
+        `,
+      },
+      {
+        name: "엠버서더_대시보드.js",
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/Trip_Tracks_dash.jpg",
+        type: "js",
+        code: `var express = require("express");
+var router = express.Router();
+const pool = require("../../utils/DBconn");
+
+router.use("/", async (req, res, next) => {
+  const { User_ID } = req.session;
+  const { Post_ID } = req.body;
+  if (!User_ID) return res.status(501).json({ success: false, msg: "로그인이 필요합니다." });
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    //권환 조회
+    let [User_Info] = await conn.query("SELECT User_Rule FROM User_Info WHERE User_ID=?", [User_ID]);
+    if (!User_Info) return res.status(501).json({ success: false, msg: "사용자 정보를 찾을 수 없습니다." });
+    if (User_Info.User_Rule !== 1) return res.status(501).json({ success: false, msg: "권한이 없습니다." });
+
+    // 쿼리 실행
+    let post_info = {};
+
+    // 게시물 정보 가져오기
+    let [post] = await conn.query(
+      "
+  SELECT 
+      P.Post_Caption,
+      P.Post_Title,
+      P.Post_Create_Timestamp,
+      P.Post_Edit_Timestamp
+  FROM Post P
+  WHERE P.Post_ID = ?
+",
+      [Post_ID]
+    );
+
+    // 게시물 이미지 가져오기
+    let images = await conn.query(
+      "
+  SELECT 
+      PI.Image_Src
+  FROM Post_Image PI
+  WHERE PI.Post_ID = ?
+",
+      [Post_ID]
+    );
+
+    // 게시물 댓글 가져오기
+    let comments = await conn.query(
+      "
+  SELECT 
+    PC.User_ID AS Comment_User_ID,
+    PC.Comment_Text,
+    PC.Comment_Timestamp,
+    UI.Profile_Img
+FROM Post_Comments PC
+LEFT JOIN User_Info UI ON PC.User_ID = UI.User_ID
+WHERE PC.Post_ID = ?
+",
+      [Post_ID]
+    );
+
+    // 게시물 좋아요 가져오기
+    let likes = await conn.query(
+      "
+  SELECT 
+    PL.User_ID AS Like_User_ID,
+    UI.Profile_Img
+FROM Post_Like PL
+LEFT JOIN User_Info UI ON PL.User_ID = UI.User_ID
+WHERE PL.Post_ID = ?
+",
+      [Post_ID]
+    );
+
+    // 게시물 로그 가져오기
+    let logs = await conn.query(
+      "
+  SELECT 
+      PLG.User_ID AS Log_User_ID,
+      PLG.Log_Date,
+      PLG.Feed_Like,
+      PLG.View,
+      PLG.Detail_View,
+      PLG.Comment
+  FROM Post_Log PLG
+  WHERE PLG.Post_ID = ?
+",
+      [Post_ID]
+    );
+
+    // 데이터 병합
+    post_info = {
+      ...post,
+      Images: images.map((image) => "http://triptracks.co.kr/imgserver/" + image.Image_Src),
+      Comments: comments.map((comment) => ({
+        User_ID: comment.Comment_User_ID,
+        Profile_Img: "http://triptracks.co.kr/imgserver/" + comment.Profile_Img,
+        Comment: comment.Comment_Text,
+        Timestamp: comment.Comment_Timestamp,
+      })),
+      Likes: likes.map((like) => ({
+        User_ID: like.Like_User_ID,
+        Profile_Img: "http://triptracks.co.kr/imgserver/" + like.Profile_Img,
+      })),
+      Logs: logs.map((log) => ({
+        User_ID: log.Log_User_ID,
+        Date: log.Log_Date,
+        Feed_Like: log.Feed_Like,
+        View: log.View,
+        Detail_View: log.Detail_View,
+        Comment: log.Comment,
+      })),
+    };
+
+    console.log(post_info);
+
+    // Image_Src: "http://triptracks.co.kr/imgserver/" + element.Image_Src,
+
+    return res.status(200).json({
+      post_info,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "앰버서더 점수 설정 중 오류가 발생했습니다." });
+  } finally {
+    if (conn) conn.end();
+  }
+});
+
+module.exports = router;`,
+        desc: `엠버서더 권한을 가진 유저의 본인의 게시글 대시보드 화면입니다.
+
+        게시물 상세 페이지에 필요한 방대한 데이터(본문, 이미지, 댓글, 좋아요, 로그)를 조회하는 API를 구현했습니다.
+        단일 쿼리로 해결할 수 없는 파편화된 데이터들을 논리적으로 그룹화하여 서버 단에서 병합하는 로직을 구성했습니다.
+        특히, 반복적인 DB 커넥션 호출에 따른 성능 저하를 방지하기 위해 데이터베이스 트랜잭션 관리와 비동기 흐름을 정교하게 제어하여,
+        복합적인 데이터를 안정적으로 프론트엔드로 전달할 수 있도록 설계했습니다.`,
+      },
+      {
+        name: "Trip_Tracks_회고.md",
+        type: "md",
+        code: `# 프로젝트를 마치며: 학습과 협업의 조화
+
+  ## 새로운 도전을 통한 성장
+  이번 프로젝트는 저에게 있어 첫 번째 장기 프로젝트이자 도전의 연속이었습니다. 단순히 기존에 알고 있던 지식을 활용하는 것에 그치지 않고,
+  매 순간 새로운 기술을 탐구하고 실무에 적용하는 '공부하며 구현하는' 개발 과정을 경험했습니다.
+
+  특히 처음 접해보는 **Node.js** 환경에서 백엔드 작업을 진행하며, **express-session**을 활용한 세션 관리 로직을 직접 구현해 보는 등 기술적 스펙트럼을 넓힐 수 있는 값진 시간이었습니다.
+  낯선 기술을 마주했을 때 끝까지 포기하지 않고 레퍼런스를 서칭하며 스스로 문제 해결 능력을 키워나간 경험은 개발자로서 한 단계 성장하는 계기가 되었습니다.
+
+  ## 최고의 팀워크와 기능 분배
+  무엇보다 이번 프로젝트에서 가장 자랑하고 싶은 점은 우리 팀의 화합입니다. 서로 다른 의견을 조율하는 과정에서도 팀원들 간의 신뢰가 두터워 기능 분배와 개발 우선순위 결정이 매우 원활하게 이루어졌습니다.
+  * **원활한 소통:** 팀원들 간의 유대감이 좋아 막히는 부분이 있을 때 언제든 자유롭게 질문하고 피드백을 주고받을 수 있는 환경이 조성되었습니다.
+  * **효율적인 기능 분배:** 각자의 강점을 살린 기능 분배를 통해 프로젝트의 속도와 완성도를 동시에 잡을 수 있었습니다.
+  서로를 배려하며 시너지를 만들어가는 협업의 즐거움을 깨달았으며, 이러한 팀 분위기 덕분에 장기 프로젝트임에도 끝까지 즐겁게 완주할 수 있었습니다.
+
+  ---
+  이번 프로젝트는 저에게 기술적인 성취감뿐만 아니라, **'함께 만드는 가치'**가 무엇인지 알려준 소중한 기회였습니다. 이번에 배운 Node.js 기반의 백엔드 역량과 협업의 노하우를 발판 삼아,
+   앞으로 어떤 프로젝트에서도 팀의 생산성을 높이는 주도적인 개발자가 되겠습니다.`,
+        desc: "회고",
+      },
+      {
+        name: "Trip_Tracks_트러블슈팅.md",
+        type: "md",
+        code: `# 트러블슈팅: SSH 인증 및 네트워크 방화벽 이슈 해결
+
+  ## 문제 상황
+  * **SSH 프로세스 이해 부족:** 배포 환경에서 팀원 전원이 SSH 인증 메커니즘에 대한 미숙지로 인해 서버 접근이 불가능한 상황이 발생했습니다.
+  * **배포 지연:** 개발 환경에서 배포 환경으로 넘어가는 과정에서 네트워크 통신 차단으로 인해 개발 업무 전체가 중단되는 병목 현상이 발생했습니다.
+
+  ## 해결 과정
+  * **프로토콜 및 정책 분석:** SSH 프로토콜의 인증 방식과 네트워크 방화벽 정책을 정밀하게 리서치했습니다.
+  * **방화벽 인프라 최적화:** 서버 인바운드 및 아웃바운드 포트 정책을 보안 지침에 맞춰 재구성했습니다.
+  * **SSH 키 관리 체계 수립:** 서버 접속을 위한 권한 관리 가이드라인 및 안전한 키 배포 방안을 마련했습니다.
+
+  ## 결과
+  * **운영 환경 정상화:** 팀원 전원의 서버 접속 문제를 해결하여 즉시 배포 가능한 환경을 구축했습니다.
+  * **팀 기술 자산화:** SSH 접속 가이드 및 방화벽 설정 매뉴얼을 작성하여 팀 내부 메신저에 배포, 향후 발생 가능한 유사 이슈에 대한 대응력을 확보했습니다.
+  * **운영 효율성 증대:** 기술 문서 공유를 통해 팀원들의 인프라 이해도를 높이고, 인프라 이슈로 인한 커뮤니케이션 리소스를 대폭 절감시켰습니다.`,
+        desc: "Trip_Tracks의 트러블 슈팅 내용입니다.",
+      },
+    ],
+  },
 ];
+// prettier-ignore
+const techData = {
+  "OS": "Linux (Ubuntu)",
+  "Language": "Java, JavaScript, JSP, C#",
+  "Framework": "Spring Boot, Spring Security, Spring Data JPA, DevExpress, Redis, Flyway",
+  "ORM":"QueryDsl, JPA, MyBatis",
+  "DB": "Oracle, MS-SQL, MariaDB, MySQL, AWS RDS, PostgreSQL",
+  "IDE/Tool": "SQL Developer, IntelliJ, Eclipse, VSCode, Postman, pgAdmin, MySQL Workbench, Visual Studio, Team Foundation",
+  "Infrastructure": "AWS EC2, AWS S3, Tomcat, PM2",
+  "DevOps": "GitHub Actions, Docker, Azure Storage Explorer",
+  "Collaboration": "Notion, Trello, Figma, ERD-Cloud, Draw.io, Adobe XD, SourceTree, Git, Github"
+};
+
 const getFileIcon = (name) => {
   if (name.endsWith(".java"))
     return <FaJava style={{ color: "#e66a05", fontSize: "15px" }} />;
@@ -813,7 +1098,7 @@ export default function Portfolio() {
   const [file, setFile] = useState(projects[0].files[0]);
   const [isCodeOpen, setIsCodeOpen] = useState(true);
   const [typedDesc, setTypedDesc] = useState("");
-
+  const [expandedProject, setExpandedProject] = useState(null);
   const [openPkgs, setOpenPkgs] = useState({
     Sloway: true,
     "Task-Flow": true,
@@ -857,9 +1142,12 @@ export default function Portfolio() {
       <IntroScreen>
         <div className="content">
           <h1 className="title">Hello, I'm a Developer.</h1>
-          <p className="subtitle">
-            안정적인 아키텍처 설계와 빠르고 쾌적한 서비스 환경을 끊임없이
-            고민하는 개발자입니다.
+          <span className="highlight">안정적인 아키텍처 설계</span>와
+          <span className="highlight"> 빠르고 쾌적한 서비스 환경</span>을
+          끊임없이 고민하는 개발자입니다.
+          {/* 💡 추가된 안내 문구 */}
+          <p className="guide-text">
+            ※ F11을 눌러 전체 화면으로 보시는 것을 추천드립니다.
           </p>
           <button className="next-btn" onClick={() => setViewMode(1)}>
             포트폴리오 보기 ➔
@@ -937,23 +1225,82 @@ export default function Portfolio() {
               </div>
             </div>
           </div>
+
+          <div className="info-section">
+            <h2 className="section-title">기술 스택</h2>
+            <div className="info-item">
+              <div className="detail">
+                <TechTable>
+                  <tbody>
+                    {Object.entries(techData).map(([category, skills]) => (
+                      <tr key={category}>
+                        <th>{category}</th>
+                        <td>{skills}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </TechTable>
+              </div>
+            </div>
+          </div>
         </LeftPanel>
 
-        {/* --- 오른쪽 영역: 목차 및 입장 버튼 --- */}
         <RightPanel>
-          <h2 className="toc-title">📁 Project Workspace</h2>
+          <h2 className="toc-title">Project Workspace</h2>
           <div className="project-list">
-            {projects.map((p, index) => (
-              <div key={p.title} className="project-card">
-                <div className="card-header">
-                  <span className="num">0{index + 1}.</span>
-                  <span className="name">{p.title}</span>
+            {projects.map((p, index) => {
+              // 현재 카드가 펼쳐져 있는지 여부 확인
+              const isExpanded = expandedProject === index;
+
+              return (
+                <div
+                  key={p.title}
+                  className={`project-card ${isExpanded ? "expanded" : ""}`}
+                  // 💡 클릭 시: 이미 열려있으면 닫기(null), 닫혀있으면 열기(index)
+                  onClick={() => setExpandedProject(isExpanded ? null : index)}
+                >
+                  <div className="card-header">
+                    <span className="num">0{index + 1}.</span>
+                    <span className="name">{p.title}</span>
+                    {/* 💡 펼침 상태를 알려주는 화살표 아이콘 */}
+                    <span className="arrow">{isExpanded ? "▼" : "▶"}</span>
+                  </div>
+
+                  {/* 💡 isExpanded가 true일 때만 아래 설명 영역 렌더링 */}
+                  {isExpanded && (
+                    <div className="card-body">
+                      <div className="desc-list">
+                        {p.shortDesc.map((line, i) => (
+                          <p key={i}>• {line}</p>
+                        ))}
+                      </div>
+
+                      <div
+                        className="tech-stack-container"
+                        style={{ marginTop: "15px" }}
+                      >
+                        <h4 style={{ color: "#569cd6", marginBottom: "8px" }}>
+                          Tech Stack
+                        </h4>
+                        {Object.entries(p.techStack).map(([key, value]) => (
+                          <div
+                            key={key}
+                            style={{ fontSize: "0.85rem", marginBottom: "4px" }}
+                          >
+                            <span
+                              style={{ fontWeight: "bold", color: "#ce9178" }}
+                            >
+                              {key}:{" "}
+                            </span>
+                            <span style={{ color: "#d4d4d4" }}>{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="card-desc">
-                  {p.shortDesc || "프로젝트 주요 내용 및 트러블슈팅"}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <button className="enter-btn" onClick={() => setViewMode(2)}>
@@ -1213,7 +1560,19 @@ const IntroScreen = styled.div`
   .subtitle {
     font-size: 1.2rem;
     line-height: 1.6;
-    margin-bottom: 40px;
+    margin-bottom: 15px; /* 기존 40px에서 안내 문구와의 간격을 위해 줄임 */
+  }
+  .highlight {
+    color: #ff3f3f;
+    font-weight: 700; /* 굵게 강조 */
+    font-size: 1.5rem;
+    text-shadow: 0 0 8px rgba(220, 178, 170, 0.3); /* 살짝 빛나는 효과 */
+  }
+  .guide-text {
+    font-size: 0.9rem;
+    color: #858585; /* VS Code 주석 색상처럼 은은하게 */
+    margin-bottom: 40px; /* 버튼과의 간격 */
+    font-family: "Pretendard", "Malgun Gothic", sans-serif;
   }
   .info-box {
     background: #252526;
@@ -1332,7 +1691,6 @@ const SplitScreen = styled.div`
 
 const LeftPanel = styled.div`
   width: 50%;
-  height: 100%;
   padding: 40px 50px;
   background-color: #181818;
   border-right: 1px solid #333333;
@@ -1340,7 +1698,7 @@ const LeftPanel = styled.div`
   position: relative;
 
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 5px;
   }
   &::-webkit-scrollbar-thumb {
     background: #444;
@@ -1362,23 +1720,35 @@ const LeftPanel = styled.div`
   }
 
   .profile-header {
-    margin-top: 20px;
     margin-bottom: 40px;
+
     .name {
       font-size: 2.2rem;
       color: #ffffff;
       margin-bottom: 5px;
     }
+
     .job-title {
       font-size: 1.2rem;
       color: #569cd6; /* VS Code 블루 */
+      margin-bottom: 12px; /* 문구와의 간격을 위해 마진 추가 */
+    }
+
+    /* 💡 추가된 배포 안내 문구 스타일 */
+    .deployment-info {
+      font-size: 0.85rem; /* 작게 설정 */
+      color: #6a9955; /* 은은한 회색 */
+      font-family:
+        "Consolas", monospace; /* 개발자 감성을 위해 고정폭 글꼴 적용 */
+      opacity: 0.8;
     }
   }
 
   .info-container {
     display: flex;
     flex-direction: column;
-    gap: 35px;
+    gap: 15px;
+    padding-bottom: 80px;
   }
 
   .info-section {
@@ -1505,6 +1875,32 @@ const RightPanel = styled.div`
     &:hover {
       background-color: #1177bb;
     }
+  }
+`;
+
+const TechTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #1e1e1e; /* VS Code 배경색 */
+  border: 1px solid #333;
+  color: #d4d4d4;
+
+  th,
+  td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+  }
+
+  th {
+    color: #ce9178; /* 키워드 강조색 */
+    width: 25%;
+    font-weight: bold;
+  }
+
+  td {
+    color: #9cdcfe; /* 기술 스택 색상 */
   }
 `;
 
