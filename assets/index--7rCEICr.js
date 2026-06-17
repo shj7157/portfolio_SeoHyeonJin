@@ -148,7 +148,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 - MyBatis 어노테이션에 멀티라인 SQL을 직접 작성하다 보니 가독성이 떨어지는 면이 있었습니다. XML 매퍼로 분리했으면 더 관리하기 좋았을 것입니다.
 
 ## 시도해볼 만한 점
-- 향후에는 쿼리 실행 계획을 반드시 분석하여 인덱스 누락 여부를 사전에 확인하겠습니다.`,트러블슈팅:`# [마일스톤 상세조회] 트러블슈팅: 권한 로직 개선 및 쿼리 성능 최적화
+- 향후에는 쿼리 실행 계획(EXPLAIN)을 반드시 분석하여 인덱스 누락 여부를 사전에 확인하겠습니다.`,트러블슈팅:`# [마일스톤 상세조회] 트러블슈팅: 권한 로직 개선 및 쿼리 성능 최적화
 
 ## 문제 상황
 - '마일스톤은 담당자만 열람 가능', '체크리스트는 누구나 열람 가능'이라는 상이한 권한 정책이 혼재하여 쿼리가 복잡해졌습니다.
@@ -174,7 +174,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 - 이미지 경로를 하드코딩된 서버 URL로 조합하는 방식이라 환경 변수로 분리했으면 더 좋았을 것입니다.
 
 ## 시도해볼 만한 점
-- 로그 기록은 Redis의 pub/sub를 통해 메인 조회 로직과 분리하면 응답 속도를 더 개선할 수 있을 것 같습니다.`,트러블슈팅:`# [메인피드조회페이지] 트러블슈팅: 다중 JOIN 데이터 중복 및 로그 기록
+- 로그 기록은 비동기 메시지 큐(예: Redis pub/sub)를 통해 메인 조회 로직과 분리하면 응답 속도를 더 개선할 수 있을 것 같습니다.`,트러블슈팅:`# [메인피드조회페이지] 트러블슈팅: 다중 JOIN 데이터 중복 및 로그 기록
 
 ## 문제 상황
 - Post, Post_Image, User_Info, Post_Like, Ambass_Save 등 다중 테이블 JOIN 시 이미지가 여러 장인 게시물에서 데이터 중복이 발생했습니다.
@@ -228,7 +228,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         
 통계 데이터를 실시간으로 조회를 진행했을 시 최저 24.3초 최대 32.1초 평균값 28.3초가 소요되는 점을 발견했습니다.
 init용 인덱스를 통한 튜닝 진행하여 최저 8.2초 최대 16.8초 평균 12.4초까지 속도를 개선했으나, 사용자가 사용하기에 모자라다고 판단하여 캐싱을 진행했습니다.
-materialized view를 활용하여 스케줄러를 통해 10분에 한 번씩 값이 반영되도록 설계했습니다. 조회 속도가 최저 0.24초 최대 0.48초 평균 0.38초까지 개선되었습니다.`,code:`-- 기존에 테이블이 있다면 삭제
+materialized view를 활용하여 스케줄러를 통해 10분에 한 번씩 값이 반영되도록 설계했습니다. 조회 속도가 최저 0.24초 최대 0.48초 평균 0.38초까지 개선되었습니다.█`,code:`-- 기존에 테이블이 있다면 삭제
 DROP TABLE IF EXISTS place_summary;
 DROP MATERIALIZED VIEW IF EXISTS place_summary;
 
@@ -273,12 +273,12 @@ SELECT
     MAX(p.status) as status,
     NOW() as updated_at
 FROM place p
-    LEFT JOIN station s ON p.type = 'STATION' AND s.place_no = p.no
-    LEFT JOIN office o ON p.type = 'OFFICE' AND o.place_no = p.no
-    LEFT JOIN work_stay w ON p.type = 'WORK_STAY' AND w.place_no = p.no
-    LEFT JOIN RsvnStats rs ON rs.place_no = p.no AND rs.type = p.type
-    LEFT JOIN ImgInfo i ON i.place_no = p.no
-    LEFT JOIN AmenityInfo am ON am.work_no = w.no
+LEFT JOIN station s ON p.type = 'STATION' AND s.place_no = p.no
+LEFT JOIN office o ON p.type = 'OFFICE' AND o.place_no = p.no
+LEFT JOIN work_stay w ON p.type = 'WORK_STAY' AND w.place_no = p.no
+LEFT JOIN RsvnStats rs ON rs.place_no = p.no AND rs.type = p.type
+LEFT JOIN ImgInfo i ON i.place_no = p.no
+LEFT JOIN AmenityInfo am ON am.work_no = w.no
 WHERE p.status = 'I'
 GROUP BY p.no, p.type;
 
@@ -288,7 +288,7 @@ CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`
 또한, 쿼리 플랜 분석을 바탕으로 인덱스를 전략적으로 배치하여 데이터 조회 속도를 최적화했습니다.
 
 유닛의 상태(검수/운영) 필드를 도입하여 데이터 생명주기를 관리합니다.
-검수 대기 상태에서는 수정 버튼을 조건부 렌더링하여 관리자의 승인 전 수정 시도를 방지했습니다.`,code:`@Override
+검수 대기 상태에서는 수정 버튼을 조건부 렌더링하여 관리자의 승인 전 수정 시도를 방지했습니다.█`,code:`@Override
 public StationDetailRespDto selectWorkStayDetailDashBoard(Long no, Long memberNo) {
     Tuple tuple = fetchWorkStayBasicInfo(no, memberNo);
     if (tuple == null) {
@@ -300,42 +300,29 @@ public StationDetailRespDto selectWorkStayDetailDashBoard(Long no, Long memberNo
     List<String> facilities = fetchFacilities(no);
     List<StationDetailRespDto.RecentBooking> recentBookings = fetchRecentBookings(no);
     return StationDetailRespDto.builder()
-            .header(headerInfo)
-            .basicInfo(basicInfo)
-            .summary(summary)
-            .facilities(facilities)
-            .recentBookings(recentBookings)
-            .build();
+            .header(headerInfo).basicInfo(basicInfo)
+            .summary(summary).facilities(facilities)
+            .recentBookings(recentBookings).build();
 }
 
 private Tuple fetchWorkStayBasicInfo(Long workStayId, Long memberNo) {
     var latestHostPlaceIdSubQuery = JPAExpressions
             .select(hostPlaceEntity.no.max())
             .from(hostPlaceEntity)
-            .where(
-                hostPlaceEntity.workStayEntity.no.eq(workStayId)
-            );
+            .where(hostPlaceEntity.workStayEntity.no.eq(workStayId));
     return queryFactory
-            .select(
-                    workStayEntity.title,
-                    placeEntity.title,
-                    placeEntity.type,
-                    hostPlaceEntity.status,
-                    placeEntity.address,
-                    workStayEntity.maxCnt,
-                    workStayEntity.cnt,
-                    workStayEntity.monPrice,
-                    workStayEntity.holPrice,
-                    workStayEntity.checkinTime,
-                    workStayEntity.checkoutTime,
-                    imgWorkStayEntity.currentUrl
-            )
+            .select(workStayEntity.title, placeEntity.title, placeEntity.type,
+                    hostPlaceEntity.status, placeEntity.address,
+                    workStayEntity.maxCnt, workStayEntity.cnt,
+                    workStayEntity.monPrice, workStayEntity.holPrice,
+                    workStayEntity.checkinTime, workStayEntity.checkoutTime,
+                    imgWorkStayEntity.currentUrl)
             .from(workStayEntity)
-                .join(placeEntity).on(placeEntity.no.eq(workStayEntity.placeEntity.no))
-                .leftJoin(imgWorkStayEntity).on(imgWorkStayEntity.workStayEntity.no.eq(workStayId)
+            .join(placeEntity).on(placeEntity.no.eq(workStayEntity.placeEntity.no))
+            .leftJoin(imgWorkStayEntity).on(imgWorkStayEntity.workStayEntity.no.eq(workStayId)
                     .and(imgWorkStayEntity.sort.eq(1)))
-                .join(hostPlaceEntity).on(hostPlaceEntity.workStayEntity.no.eq(workStayEntity.no))
-                .join(hostPlaceEntity.hostEntity, hostEntity)
+            .join(hostPlaceEntity).on(hostPlaceEntity.workStayEntity.no.eq(workStayEntity.no))
+            .join(hostPlaceEntity.hostEntity, hostEntity)
             .where(workStayEntity.no.eq(workStayId), hostEntity.memberNo.eq(memberNo),
                     hostPlaceEntity.no.in(latestHostPlaceIdSubQuery))
             .fetchOne();
@@ -346,20 +333,14 @@ private StationDetailRespDto.SummaryCard fetchSummaryCard(Long workStayId) {
     LocalDate startOfMonth = currentMonth.atDay(1);
     LocalDate endOfMonth = currentMonth.atEndOfMonth();
     Tuple bookingStats = queryFactory
-            .select(
-                rsvnEntity.no.count(),
-                rsvnEntity.amt.sum().coalesce(0)
-            )
+            .select(rsvnEntity.no.count(), rsvnEntity.amt.sum().coalesce(0))
             .from(rsvnEntity)
             .where(rsvnEntity.workStayNo.no.eq(workStayId),
                     rsvnEntity.createdAt.between(startOfMonth.atStartOfDay(), endOfMonth.atTime(23,59,59)),
                     rsvnEntity.status.in(RsvnStatus.S, RsvnStatus.E))
             .fetchOne();
     Tuple reviewStats = queryFactory
-            .select(
-                reviewEntity.no.count(),
-                reviewEntity.scoreTotal.avg().coalesce(0.0)
-            )
+            .select(reviewEntity.no.count(), reviewEntity.scoreTotal.avg().coalesce(0.0))
             .from(reviewEntity)
             .where(reviewEntity.rsvnNo.workStayNo.no.eq(workStayId))
             .fetchOne();
@@ -386,43 +367,31 @@ public ApprovalDetailRespDto findWorkStayDetail(Long no) {
 
     ApprovalDetailRespDto dto = queryFactory
             .select(Projections.constructor(ApprovalDetailRespDto.class,
-                    hostPlaceEntity.no,
-                    placeEntity.no,
-                    placeEntity.type,
-                    workStayEntity.title,
-                    workStayEntity.content,
-                    placeEntity.address,
-                    memberEntity.name,
-                    workStayEntity.monPrice,
-                    workStayEntity.cnt,
-                    workStayEntity.maxCnt,
-                    workStayEntity.checkinTime,
-                    workStayEntity.checkoutTime
-            ))
+                    hostPlaceEntity.no, placeEntity.no, placeEntity.type,
+                    workStayEntity.title, workStayEntity.content,
+                    placeEntity.address, memberEntity.name,
+                    workStayEntity.monPrice, workStayEntity.cnt,
+                    workStayEntity.maxCnt, workStayEntity.checkinTime,
+                    workStayEntity.checkoutTime))
             .from(workStayEntity)
-              .join(workStayEntity.placeEntity, placeEntity)
-              .join(hostPlaceEntity).on(hostPlaceEntity.no.in(latestPendingHostPlaceIdSubQuery))
-              .join(hostPlaceEntity.hostEntity, hostEntity)
-              .join(memberEntity).on(memberEntity.no.eq(hostEntity.memberNo))
+            .join(workStayEntity.placeEntity, placeEntity)
+            .join(hostPlaceEntity).on(hostPlaceEntity.no.in(latestPendingHostPlaceIdSubQuery))
+            .join(hostPlaceEntity.hostEntity, hostEntity)
+            .join(memberEntity).on(memberEntity.no.eq(hostEntity.memberNo))
             .where(workStayEntity.no.eq(no))
             .fetchOne();
 
     if (dto != null) {
         dto.setImages(queryFactory
                 .select(Projections.constructor(ApprovalDetailRespDto.ImageDto.class,
-                        imgWorkStayEntity.no,
-                        imgWorkStayEntity.currentUrl,
-                        imgWorkStayEntity.sort
-                ))
+                        imgWorkStayEntity.no, imgWorkStayEntity.currentUrl, imgWorkStayEntity.sort))
                 .from(imgWorkStayEntity)
                 .where(imgWorkStayEntity.workStayEntity.no.eq(no))
                 .fetch());
 
         List<ApprovalDetailRespDto.AmenityDto> mainAmenities = queryFactory
                 .select(Projections.constructor(ApprovalDetailRespDto.AmenityDto.class,
-                        workAmenityEntity.amenityEntity.no,
-                        workAmenityEntity.amenityEntity.name
-                ))
+                        workAmenityEntity.amenityEntity.no, workAmenityEntity.amenityEntity.name))
                 .from(workAmenityEntity)
                 .where(workAmenityEntity.workStayEntity.no.eq(no))
                 .fetch();
@@ -479,27 +448,16 @@ private int insertNewManager(ProjEmplVo projEmplVo) {
 특히 프로젝트와 마일스톤 간 담당자 정보의 참조 관계가 모호할 수 있는 점을 고려해 조인 조건을 더욱 견고하게 최적화했으며, 성능을 위해 인덱스를 활용한 결합 조건을 적용했습니다.
 
 마일스톤의 상태값도 프로젝트와 마찬가지로 드래그 앤 드롭 기능을 통해 실시간으로 반영되도록 구현했습니다.`,code:`SELECT DISTINCT
-    M.NO,
-    M.SCHE_NO AS scheno,
-    M.TITLE,
-    M.CONTENT,
-    M.LABEL,
-    M.STATE,
-    M.START_DATE AS startDate,
-    M.END_DATE AS endDate,
-    M.FOLLOWER_NO AS followerNo,
-    EM.NAME AS followerName,
-    PEME.NO AS mileEmplNo,
-    PEME.NAME AS mileEmplName,
-    PEPE.NO AS projEmplNo,
-    PEPE.NAME AS projEmplName
+    M.NO, M.SCHE_NO AS scheno, M.TITLE, M.CONTENT, M.LABEL, M.STATE,
+    M.START_DATE AS startDate, M.END_DATE AS endDate,
+    M.FOLLOWER_NO AS followerNo, EM.NAME AS followerName,
+    PEME.NO AS mileEmplNo, PEME.NAME AS mileEmplName,
+    PEPE.NO AS projEmplNo, PEPE.NAME AS projEmplName
 FROM MILE M
     LEFT JOIN EMPL EM ON EM.NO = M.FOLLOWER_NO
-    INNER JOIN PROJ_EMPL PEM ON PEM.MILE_NO = M.NO 
-        AND PEM.IS_WRITER_YN = 'Y'
+    INNER JOIN PROJ_EMPL PEM ON PEM.MILE_NO = M.NO AND PEM.IS_WRITER_YN = 'Y'
         INNER JOIN EMPL PEME ON PEME.NO = PEM.EMPL_NO
-    LEFT JOIN PROJ_EMPL PEP ON PEP.PROJ_NO = #{projNo} 
-        AND PEP.IS_MANAGER_YN = 'Y'
+    LEFT JOIN PROJ_EMPL PEP ON PEP.PROJ_NO = #{projNo} AND PEP.IS_MANAGER_YN = 'Y'
         INNER JOIN EMPL PEPE ON PEPE.NO = PEP.EMPL_NO
 WHERE M.DEL_AT IS NULL AND M.NO = #{no}`}]},{title:`Trip-Tracks`,shortDesc:[`여행과 SNS를 결합한 새로운 서비스`,`여행 경험과 정보를 공유하는 플랫폼`,`담당 역할 : 2학기 팀장, 백엔드 개발자, DB관리자`,`담당 기능 : 유저, 프로필, 게시글, 다이렉트 메시지, 게시글 좋아요, 유저간 팔로우`],techStack:{OS:`Windows, macOS`,Frontend:`Vue.js (Vite), Vue Router, Vuex, Axios, Socket.io-client, Vue3-Toastify`,Backend:`Node.js (Express), Express-session, Socket.io`,DB:`Maria-DB`,Infrastructure:`Ubuntu Server, PM2`,API:`Kakao Map API`,Collaboration:`Git, GitHub, Adobe XD, Draw.io`},files:[{name:`메인피드조회페이지.js`,type:`js`,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/Trip_Tracks_MainPage.jpg`,desc:`메인 홈페이지입니다.
 
@@ -511,36 +469,20 @@ WHERE M.DEL_AT IS NULL AND M.NO = #{no}`}]},{title:`Trip-Tracks`,shortDesc:[`여
   try {
     conn = await DBconn.getConnection();
     const selectAmbassPostsQuery = \`
-      SELECT 
-          CAST(Post.Post_ID AS CHAR) AS Post_ID,
-          Post.Post_Title,
-          Post.Post_Caption,
-          MIN(Post_Image.Image_Src) AS Image_Src,
-          CAST(Post.User_ID AS CHAR) AS User_ID,
-          User_Info.Profile_Img,
-          User_Info.User_Rule,
-          IFNULL(CAST(Post_Like.likeCount AS CHAR), '0') AS likeCount,
-          IF(Post_Like_User.User_ID IS NOT NULL, 1, 0) AS isLike
+      SELECT CAST(Post.Post_ID AS CHAR) AS Post_ID, Post.Post_Title,
+             Post.Post_Caption, MIN(Post_Image.Image_Src) AS Image_Src,
+             CAST(Post.User_ID AS CHAR) AS User_ID,
+             User_Info.Profile_Img, User_Info.User_Rule,
+             IFNULL(CAST(Post_Like.likeCount AS CHAR), '0') AS likeCount,
+             IF(Post_Like_User.User_ID IS NOT NULL, 1, 0) AS isLike
       FROM Ambass_Save
-          LEFT JOIN Post ON Ambass_Save.Post_ID = Post.Post_ID
-          LEFT JOIN Post_Image ON Post.Post_ID = Post_Image.Post_ID
-          LEFT JOIN User_Info ON Post.User_ID = User_Info.User_ID
-          LEFT JOIN (
-              SELECT 
-                  Post_ID,
-                  COUNT(*) AS likeCount
-              FROM Post_Like 
-              GROUP BY Post_ID
-          ) AS Post_Like
-              ON Post.Post_ID = Post_Like.Post_ID
-          LEFT JOIN (
-              SELECT 
-                  Post_ID,
-                  User_ID 
-              FROM Post_Like 
-              WHERE User_ID = ?
-          ) AS Post_Like_User
-              ON Post.Post_ID = Post_Like_User.Post_ID
+      LEFT JOIN Post ON Ambass_Save.Post_ID = Post.Post_ID
+      LEFT JOIN Post_Image ON Post.Post_ID = Post_Image.Post_ID
+      LEFT JOIN User_Info ON Post.User_ID = User_Info.User_ID
+      LEFT JOIN (SELECT Post_ID, COUNT(*) AS likeCount FROM Post_Like GROUP BY Post_ID) AS Post_Like
+             ON Post.Post_ID = Post_Like.Post_ID
+      LEFT JOIN (SELECT Post_ID, User_ID FROM Post_Like WHERE User_ID = ?) AS Post_Like_User
+             ON Post.Post_ID = Post_Like_User.Post_ID
       WHERE Ambass_Save.User_ID = ? AND User_Info.User_Rule = 1
       GROUP BY Post.Post_ID
       ORDER BY Post.Post_ID DESC LIMIT 20
@@ -574,19 +516,12 @@ WHERE M.DEL_AT IS NULL AND M.NO = #{no}`}]},{title:`Trip-Tracks`,shortDesc:[`여
     let [post] = await conn.query("SELECT P.Post_Caption, P.Post_Title FROM Post P WHERE P.Post_ID = ?", [Post_ID]);
     let images = await conn.query("SELECT PI.Image_Src FROM Post_Image PI WHERE PI.Post_ID = ?", [Post_ID]);
     let comments = await conn.query(\`
-      SELECT 
-          PC.User_ID AS Comment_User_ID,
-          PC.Comment_Text,
-          UI.Profile_Img
-      FROM Post_Comments PC
-          LEFT JOIN User_Info UI ON PC.User_ID = UI.User_ID
+      SELECT PC.User_ID AS Comment_User_ID, PC.Comment_Text, UI.Profile_Img
+      FROM Post_Comments PC LEFT JOIN User_Info UI ON PC.User_ID = UI.User_ID
       WHERE PC.Post_ID = ?\`, [Post_ID]);
     let likes = await conn.query(\`
-      SELECT 
-          PL.User_ID AS Like_User_ID,
-          UI.Profile_Img
-      FROM Post_Like PL 
-          LEFT JOIN User_Info UI ON PL.User_ID = UI.User_ID
+      SELECT PL.User_ID AS Like_User_ID, UI.Profile_Img
+      FROM Post_Like PL LEFT JOIN User_Info UI ON PL.User_ID = UI.User_ID
       WHERE PL.Post_ID = ?\`, [Post_ID]);
 
     const BASE = "http://triptracks.co.kr/imgserver/";
@@ -606,114 +541,741 @@ WHERE M.DEL_AT IS NULL AND M.NO = #{no}`}]},{title:`Trip-Tracks`,shortDesc:[`여
   } finally {
     if (conn) conn.end();
   }
-});`}]}],cd={OS:`Linux (Ubuntu)`,Language:`Java, JavaScript, JSP, C#`,Framework:`Spring Boot, Spring Security, Spring Data JPA, DevExpress, Redis, Flyway`,ORM:`QueryDsl, JPA, MyBatis`,DB:`Oracle, MS-SQL, MariaDB, MySQL, AWS RDS, PostgreSQL`,"IDE/Tool":`SQL Developer, IntelliJ, Eclipse, VSCode, Postman, pgAdmin, MySQL Workbench, Visual Studio`,Infrastructure:`AWS EC2, AWS S3, Tomcat, PM2`,DevOps:`GitHub Actions, Docker, Azure Storage Explorer`,Collaboration:`Notion, Trello, Figma, ERD-Cloud, Draw.io, Adobe XD, SourceTree, Git, Github`},ld=e=>e.endsWith(`.java`)?(0,Z.jsx)(rd,{style:{color:`#e66a05`,fontSize:`15px`}}):e.endsWith(`.js`)?(0,Z.jsx)(nd,{style:{color:`#f1e05a`,fontSize:`15px`}}):e.endsWith(`.sql`)?(0,Z.jsx)(Ku,{style:{color:`#e38c00`,fontSize:`15px`}}):e.endsWith(`.md`)?(0,Z.jsx)(Bu,{style:{color:`#007acc`,fontSize:`15px`}}):(0,Z.jsx)(Wu,{style:{color:`#cccccc`,fontSize:`15px`}}),ud=e=>{if(!e)return`javascript`;let t=e.toLowerCase();return t===`java`?`java`:t===`sql`?`sql`:t===`md`||t===`markdown`?`markdown`:`javascript`};function dd(){let[e,t]=(0,v.useState)(0),[n,r]=(0,v.useState)([{projectTitle:sd[0].title,file:sd[0].files[0]}]),[i,a]=(0,v.useState)(0),[o,s]=(0,v.useState)(!0),[c,l]=(0,v.useState)(!0),[u,d]=(0,v.useState)(`설명`),[f,p]=(0,v.useState)(50),[m,h]=(0,v.useState)(260),[g,_]=(0,v.useState)({Sloway:!0,"Task-Flow":!0,"Trip-Tracks":!0}),[y,b]=(0,v.useState)(null),[x,S]=(0,v.useState)(``),C=(0,v.useRef)(!1),w=(0,v.useRef)(!1),ee=(0,v.useRef)(null),te=(0,v.useRef)(null),ne=n[i]??n[0],T=ne?.file,re=ne?.projectTitle,ie=re&&T?`${re}::${T.name}`:null,ae=ie?od[ie]??null:null,oe=()=>u===`설명`?T?.desc||`설명이 없습니다.`:ae?ae[u]||`내용이 없습니다.`:`이 파일에 대한 ${u} 내용이 없습니다.`,se=(0,v.useCallback)((e,t)=>{r(n=>{let r=n.findIndex(n=>n.projectTitle===e&&n.file.name===t.name);if(r!==-1)return a(r),n;let i=[...n,{projectTitle:e,file:t}];return a(i.length-1),i}),d(`설명`),s(!0),l(!0)},[]),ce=(0,v.useCallback)((e,t)=>{e.stopPropagation(),r(e=>{if(e.length===1)return e;let n=e.filter((e,n)=>n!==t);return a(e=>e>=n.length?n.length-1:e>t?e-1:Math.min(e,n.length-1)),n})},[]);(0,v.useEffect)(()=>{if(e!==2)return;S(``);let t=0,n=oe(),r=setInterval(()=>{S(n.slice(0,t)),t+=6,t>n.length+6&&(S(n),clearInterval(r))},10);return()=>clearInterval(r)},[T,u,e]),(0,v.useEffect)(()=>{let e=e=>{if(!C.current||!ee.current)return;let t=ee.current.getBoundingClientRect();p(Math.min(Math.max((e.clientX-t.left)/t.width*100,15),85))},t=()=>{C.current=!1};return window.addEventListener(`mousemove`,e),window.addEventListener(`mouseup`,t),()=>{window.removeEventListener(`mousemove`,e),window.removeEventListener(`mouseup`,t)}},[]),(0,v.useEffect)(()=>{let e=e=>{if(!w.current||!te.current)return;let t=te.current.getBoundingClientRect(),n=t.bottom-e.clientY;h(Math.min(Math.max(n,80),t.height*.7))},t=()=>{w.current=!1};return window.addEventListener(`mousemove`,e),window.addEventListener(`mouseup`,t),()=>{window.removeEventListener(`mousemove`,e),window.removeEventListener(`mouseup`,t)}},[]);let le=!!T?.img,E=le&&o&&c,D=le&&o&&!c,O=!o||!le;return e===0?(0,Z.jsx)(fd,{children:(0,Z.jsxs)(`div`,{className:`content`,children:[(0,Z.jsx)(`h1`,{className:`title`,children:`Hello, I'm a Developer.`}),(0,Z.jsx)(`span`,{className:`highlight`,children:`안정적인 아키텍처 설계`}),`와`,(0,Z.jsx)(`span`,{className:`highlight`,children:` 빠르고 쾌적한 서비스 환경`}),`을 끊임없이 고민하는 개발자입니다.`,(0,Z.jsx)(`p`,{className:`guide-text`,children:`※ F11을 눌러 전체 화면으로 보시는 것을 추천드립니다.`}),(0,Z.jsx)(`button`,{className:`next-btn`,onClick:()=>t(1),children:`포트폴리오 보기 ➔`})]})}):e===1?(0,Z.jsxs)(pd,{children:[(0,Z.jsxs)(md,{children:[(0,Z.jsx)(`button`,{className:`back-btn`,onClick:()=>t(0),children:`⬅️ Back`}),(0,Z.jsxs)(`div`,{className:`profile-header`,children:[(0,Z.jsx)(`h1`,{className:`name`,children:`서현진`}),(0,Z.jsx)(`p`,{className:`job-title`,children:`Backend / Full-Stack Developer`})]}),(0,Z.jsx)(`div`,{className:`info-container`,children:[{title:`이력`,items:[{date:`2025.07 - 2025.09`,name:`소프트넷 (계약직)`,desc:[`솔루션 사업부 기술연구소 연구원`,`ERP, 병원MIS프로그램 개발`]}]},{title:`학력`,items:[{date:`2020.03 - 2025.02`,name:`부천대학교`,desc:[`컴퓨터 소프트웨어 학과`]}]},{title:`자격증`,items:[{date:`2026.06`,name:`정보처리산업기사(필기)`,desc:[`한국산업인력공단`]}]},{title:`교육 수료`,items:[{date:`2025.11 - 2026.06`,name:`AWS 클라우드 기반 Devops 개발자 양성 과정`,desc:[`KH정보교육원`]}]}].map(e=>(0,Z.jsxs)(`div`,{className:`info-section`,children:[(0,Z.jsx)(`h2`,{className:`section-title`,children:e.title}),e.items.map(e=>(0,Z.jsxs)(`div`,{className:`info-item`,children:[(0,Z.jsx)(`span`,{className:`date`,children:e.date}),(0,Z.jsxs)(`div`,{className:`detail`,children:[(0,Z.jsx)(`div`,{className:`title`,children:e.name}),e.desc.map(e=>(0,Z.jsx)(`div`,{className:`desc`,children:e},e))]})]},e.name))]},e.title))}),(0,Z.jsxs)(`div`,{className:`info-section`,children:[(0,Z.jsx)(`h2`,{className:`section-title`,children:`기술 스택`}),(0,Z.jsx)(gd,{children:(0,Z.jsx)(`tbody`,{children:Object.entries(cd).map(([e,t])=>(0,Z.jsxs)(`tr`,{children:[(0,Z.jsx)(`th`,{children:e}),(0,Z.jsx)(`td`,{children:t})]},e))})})]})]}),(0,Z.jsxs)(hd,{children:[(0,Z.jsx)(`h2`,{className:`toc-title`,children:`Project Workspace`}),(0,Z.jsx)(`div`,{className:`project-list`,children:sd.map((e,t)=>{let n=y===t;return(0,Z.jsxs)(`div`,{className:`project-card ${n?`expanded`:``}`,onClick:()=>b(n?null:t),children:[(0,Z.jsxs)(`div`,{className:`card-header`,children:[(0,Z.jsxs)(`span`,{className:`num`,children:[`0`,t+1,`.`]}),(0,Z.jsx)(`span`,{className:`name`,children:e.title}),(0,Z.jsx)(`span`,{className:`arrow`,children:n?`▼`:`▶`})]}),n&&(0,Z.jsxs)(`div`,{className:`card-body`,children:[(0,Z.jsx)(`div`,{className:`desc-list`,children:e.shortDesc.map((e,t)=>(0,Z.jsxs)(`p`,{children:[`• `,e]},t))}),(0,Z.jsxs)(`div`,{style:{marginTop:`15px`},children:[(0,Z.jsx)(`h4`,{style:{color:`#569cd6`,marginBottom:`8px`},children:`Tech Stack`}),Object.entries(e.techStack).map(([e,t])=>(0,Z.jsxs)(`div`,{style:{fontSize:`0.85rem`,marginBottom:`4px`},children:[(0,Z.jsxs)(`span`,{style:{fontWeight:`bold`,color:`#ce9178`},children:[e,`: `]}),(0,Z.jsx)(`span`,{style:{color:`#d4d4d4`},children:t})]},e))]})]})]},e.title)})}),(0,Z.jsx)(`button`,{className:`enter-btn`,onClick:()=>t(2),children:`코드 워크스페이스 입장하기 ➔`})]})]}):(0,Z.jsxs)(_d,{children:[(0,Z.jsx)(ad,{}),(0,Z.jsxs)(vd,{children:[(0,Z.jsxs)(`div`,{className:`menus`,children:[(0,Z.jsx)(`img`,{src:`https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg`,alt:`vscode`,className:`logo`}),[`File`,`Edit`,`Selection`,`View`,`Go`,`Run`,`Terminal`,`Help`].map(e=>(0,Z.jsx)(`span`,{children:e},e))]}),(0,Z.jsxs)(`div`,{className:`title`,children:[T?.name,` - Portfolio Workspace - Visual Studio Code`]}),(0,Z.jsxs)(`div`,{className:`controls`,children:[(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Yu,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Xu,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn close`,children:(0,Z.jsx)(Zu,{})})]})]}),(0,Z.jsxs)(yd,{children:[(0,Z.jsxs)(Q,{children:[(0,Z.jsx)(`div`,{className:`icon active`,children:(0,Z.jsx)(Uu,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(zu,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(Lu,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(X,{})}),(0,Z.jsx)(`div`,{className:`spacer`}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(td,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(Ru,{})})]}),(0,Z.jsxs)(bd,{children:[(0,Z.jsx)(xd,{children:`EXPLORER`}),(0,Z.jsx)(Sd,{children:`∨ PORTFOLIO WORKSPACE`}),(0,Z.jsx)(`div`,{className:`file-tree`,children:sd.map(e=>(0,Z.jsxs)(`div`,{children:[(0,Z.jsxs)(Cd,{onClick:()=>_(t=>({...t,[e.title]:!t[e.title]})),children:[(0,Z.jsx)(`span`,{className:`arrow`,children:g[e.title]?(0,Z.jsx)($u,{}):(0,Z.jsx)(Qu,{})}),(0,Z.jsx)(`span`,{className:`folder-icon`,children:g[e.title]?(0,Z.jsx)(Hu,{style:{color:`#dcb67a`}}):(0,Z.jsx)(Vu,{style:{color:`#dcb67a`}})}),e.title]}),g[e.title]&&e.files.map(t=>(0,Z.jsxs)(wd,{active:T?.name===t.name&&re===e.title,onClick:()=>se(e.title,t),children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:ld(t.name)}),t.name]},t.name))]},e.title))})]}),(0,Z.jsxs)(Td,{ref:te,children:[(0,Z.jsxs)(Ed,{children:[(0,Z.jsx)(`div`,{className:`tabs-wrapper`,children:n.map((e,t)=>(0,Z.jsxs)(Dd,{active:t===i,onClick:()=>a(t),children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:ld(e.file.name)}),(0,Z.jsx)(`span`,{className:`f-name`,children:e.file.name}),(0,Z.jsx)(`span`,{className:`f-close`,onClick:e=>ce(e,t),children:(0,Z.jsx)(Ju,{})})]},`${e.projectTitle}-${e.file.name}-${t}`))}),(0,Z.jsxs)(Od,{children:[le&&(0,Z.jsxs)(Z.Fragment,{children:[(0,Z.jsxs)(kd,{active:o,onClick:()=>s(e=>!e),children:[(0,Z.jsx)(Gu,{style:{marginRight:`4px`}}),` 이미지`]}),(0,Z.jsxs)(kd,{active:c,onClick:()=>l(e=>!e),children:[(0,Z.jsx)(qu,{style:{marginRight:`4px`}}),` 코드`]}),(0,Z.jsx)(Ad,{})]}),(0,Z.jsx)(jd,{onClick:()=>t(1),children:`← 설명으로 돌아가기`})]})]}),(0,Z.jsxs)(Md,{children:[(0,Z.jsx)(`span`,{children:`Portfolio Workspace`}),` > `,(0,Z.jsx)(`span`,{children:re}),` > `,(0,Z.jsx)(`span`,{children:T?.name})]}),(0,Z.jsxs)($,{ref:ee,children:[D&&(0,Z.jsx)(Nd,{style:{width:`100%`},children:(0,Z.jsx)(`img`,{src:T.img,alt:`preview`})}),O&&(0,Z.jsx)(Fd,{style:{width:`100%`},children:(0,Z.jsx)(bu,{language:ud(T?.type),style:xu,showLineNumbers:!0,wrapLines:!0,customStyle:{background:`transparent`,margin:0,padding:`15px 20px`,fontSize:`13px`,lineHeight:`1.5`},children:T?.code||``})}),E&&(0,Z.jsxs)(Z.Fragment,{children:[(0,Z.jsx)(Nd,{style:{width:`${f}%`},children:(0,Z.jsx)(`img`,{src:T.img,alt:`preview`})}),(0,Z.jsxs)(Pd,{onMouseDown:()=>{C.current=!0},children:[(0,Z.jsx)(`div`,{className:`line`}),(0,Z.jsx)(`div`,{className:`grip`,children:`⠿`}),(0,Z.jsx)(`div`,{className:`line`})]}),(0,Z.jsx)(Fd,{style:{flex:1},children:(0,Z.jsx)(bu,{language:ud(T?.type),style:xu,showLineNumbers:!0,wrapLines:!0,customStyle:{background:`transparent`,margin:0,padding:`15px 20px`,fontSize:`13px`,lineHeight:`1.5`},children:T?.code||``})})]})]}),(0,Z.jsx)(Id,{onMouseDown:()=>{w.current=!0},children:(0,Z.jsx)(`div`,{className:`dots`,children:`· · · · · · · · · · · · · · · · · · · ·`})}),(0,Z.jsxs)(Ld,{style:{height:`${m}px`},children:[(0,Z.jsxs)(Rd,{children:[(0,Z.jsxs)(zd,{active:u===`설명`,onClick:()=>d(`설명`),children:[(0,Z.jsx)(Iu,{style:{marginRight:`4px`}}),`화면 설명`]}),(0,Z.jsxs)(zd,{active:u===`회고`,onClick:()=>d(`회고`),children:[(0,Z.jsx)(Bu,{style:{marginRight:`4px`}}),`회고`]}),(0,Z.jsxs)(zd,{active:u===`트러블슈팅`,onClick:()=>d(`트러블슈팅`),children:[(0,Z.jsx)(Wu,{style:{marginRight:`4px`}}),`트러블슈팅`]})]}),(0,Z.jsxs)(Bd,{children:[(0,Z.jsxs)(`div`,{className:`prompt`,children:[(0,Z.jsx)(`span`,{className:`path`,children:`portfolio@macbook`}),(0,Z.jsx)(`span`,{className:`colon`,children:`:`}),(0,Z.jsxs)(`span`,{className:`dir`,children:[`~/`,re]}),u===`설명`?`$ ./explain.sh ${T?.name}`:u===`회고`?`$ cat RETROSPECTIVE.md   # ${T?.name}`:`$ cat TROUBLESHOOTING.md   # ${T?.name}`]}),(0,Z.jsxs)(`div`,{className:`output`,children:[x,(0,Z.jsx)(`span`,{className:`cursor`,children:`█`})]})]})]})]})]}),(0,Z.jsxs)(Vd,{children:[(0,Z.jsxs)(`div`,{className:`left`,children:[(0,Z.jsx)(`span`,{className:`item remote`,children:`><`}),(0,Z.jsxs)(`span`,{className:`item`,children:[(0,Z.jsx)(Lu,{style:{marginRight:`4px`}}),`main*`]}),(0,Z.jsx)(`span`,{className:`item`,children:`❌ 0 ⚠️ 0`})]}),(0,Z.jsxs)(`div`,{className:`right`,children:[(0,Z.jsx)(`span`,{className:`item`,children:`Ln 1, Col 1`}),(0,Z.jsx)(`span`,{className:`item`,children:`Spaces: 2`}),(0,Z.jsx)(`span`,{className:`item`,children:`UTF-8`}),(0,Z.jsx)(`span`,{className:`item`,children:(T?.type||``).toUpperCase()}),(0,Z.jsx)(`span`,{className:`item`,children:`Prettier ✅`}),(0,Z.jsx)(`span`,{className:`item`,children:(0,Z.jsx)(ed,{})})]})]})]})}var fd=j.div`
-  display: flex; align-items: center; justify-content: center; width: 100%; height: 100vh; background: #1e1e1e; color: #d4d4d4; font-family: "Consolas","Courier New",monospace;
-  .content { text-align: center; animation: fadeIn 1s ease-in-out; }
-  .title { font-size: 3rem; color: #569cd6; margin-bottom: 20px; }
-  .highlight { color: #ff3f3f; font-weight: 700; font-size: 1.5rem; }
-  .guide-text { font-size: 0.9rem; color: #858585; margin-bottom: 40px; }
-  .next-btn { padding: 12px 24px; font-size: 1.1rem; background: #0e639c; color: white; border: none; border-radius: 4px; cursor: pointer; &:hover { background: #1177bb; } }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+});`}]}],cd={OS:`Linux (Ubuntu)`,Language:`Java, JavaScript, JSP, C#`,Framework:`Spring Boot, Spring Security, Spring Data JPA, DevExpress, Redis, Flyway`,ORM:`QueryDsl, JPA, MyBatis`,DB:`Oracle, MS-SQL, MariaDB, MySQL, AWS RDS, PostgreSQL`,"IDE/Tool":`SQL Developer, IntelliJ, Eclipse, VSCode, Postman, pgAdmin, MySQL Workbench, Visual Studio`,Infrastructure:`AWS EC2, AWS S3, Tomcat, PM2`,DevOps:`GitHub Actions, Docker, Azure Storage Explorer`,Collaboration:`Notion, Trello, Figma, ERD-Cloud, Draw.io, Adobe XD, SourceTree, Git, Github`},ld=e=>e.endsWith(`.java`)?(0,Z.jsx)(rd,{style:{color:`#e66a05`,fontSize:`15px`}}):e.endsWith(`.js`)?(0,Z.jsx)(nd,{style:{color:`#f1e05a`,fontSize:`15px`}}):e.endsWith(`.sql`)?(0,Z.jsx)(Ku,{style:{color:`#e38c00`,fontSize:`15px`}}):e.endsWith(`.md`)?(0,Z.jsx)(Bu,{style:{color:`#007acc`,fontSize:`15px`}}):(0,Z.jsx)(Wu,{style:{color:`#cccccc`,fontSize:`15px`}}),ud=e=>{if(!e)return`javascript`;let t=e.toLowerCase();return t===`java`?`java`:t===`sql`?`sql`:t===`md`||t===`markdown`?`markdown`:`javascript`};function dd(){let[e,t]=(0,v.useState)(0),[n,r]=(0,v.useState)([{projectTitle:sd[0].title,file:sd[0].files[0]}]),[i,a]=(0,v.useState)(0),[o,s]=(0,v.useState)(!0),[c,l]=(0,v.useState)(!0),[u,d]=(0,v.useState)(`설명`),[f,p]=(0,v.useState)(50),[m,h]=(0,v.useState)(260),[g,_]=(0,v.useState)({Sloway:!0,"Task-Flow":!0,"Trip-Tracks":!0}),[y,b]=(0,v.useState)(null),[x,S]=(0,v.useState)(``),C=(0,v.useRef)(!1),w=(0,v.useRef)(!1),ee=(0,v.useRef)(null),te=(0,v.useRef)(null),ne=n[i]??n[0],T=ne?.file,re=ne?.projectTitle,ie=re&&T?`${re}::${T.name}`:null,ae=ie?od[ie]??null:null,oe=()=>u===`설명`?T?.desc||`설명이 없습니다.`:ae?ae[u]||`내용이 없습니다.`:`이 파일에 대한 ${u} 내용이 없습니다.`,se=(0,v.useCallback)((e,t)=>{r(n=>{let r=n.findIndex(n=>n.projectTitle===e&&n.file.name===t.name);if(r!==-1)return a(r),n;let i=[...n,{projectTitle:e,file:t}];return a(i.length-1),i}),d(`설명`),s(!0),l(!0)},[]),ce=(0,v.useCallback)((e,t)=>{e.stopPropagation(),r(e=>{if(e.length===1)return e;let n=e.filter((e,n)=>n!==t);return a(e=>e>=n.length?n.length-1:e>t?e-1:Math.min(e,n.length-1)),n})},[]);(0,v.useEffect)(()=>{if(e!==2)return;S(``);let t=0,n=oe(),r=setInterval(()=>{S(n.slice(0,t)),t+=6,t>n.length+6&&(S(n),clearInterval(r))},10);return()=>clearInterval(r)},[T,u,e]),(0,v.useEffect)(()=>{let e=e=>{if(!C.current||!ee.current)return;let t=ee.current.getBoundingClientRect();p(Math.min(Math.max((e.clientX-t.left)/t.width*100,15),85))},t=()=>{C.current=!1};return window.addEventListener(`mousemove`,e),window.addEventListener(`mouseup`,t),()=>{window.removeEventListener(`mousemove`,e),window.removeEventListener(`mouseup`,t)}},[]),(0,v.useEffect)(()=>{let e=e=>{if(!w.current||!te.current)return;let t=te.current.getBoundingClientRect(),n=t.bottom-e.clientY;h(Math.min(Math.max(n,80),t.height*.7))},t=()=>{w.current=!1};return window.addEventListener(`mousemove`,e),window.addEventListener(`mouseup`,t),()=>{window.removeEventListener(`mousemove`,e),window.removeEventListener(`mouseup`,t)}},[]);let le=!!T?.img,E=le&&o&&c,D=le&&o&&!c,O=!o||!le;return e===0?(0,Z.jsx)(fd,{children:(0,Z.jsxs)(`div`,{className:`content`,children:[(0,Z.jsx)(`h1`,{className:`title`,children:`Hello, I'm a Developer. Seo Hyeonjin`}),(0,Z.jsx)(`span`,{className:`highlight`,children:`안정적인 아키텍처 설계`}),`와`,(0,Z.jsx)(`span`,{className:`highlight`,children:` 빠르고 쾌적한 서비스 환경`}),`을 끊임없이 고민하는 개발자입니다.`,(0,Z.jsx)(`p`,{className:`guide-text`,children:`※ F11을 눌러 전체 화면으로 보시는 것을 추천드립니다.`}),(0,Z.jsx)(`button`,{className:`next-btn`,onClick:()=>t(1),children:`포트폴리오 보기 ➔`})]})}):e===1?(0,Z.jsxs)(pd,{children:[(0,Z.jsxs)(md,{children:[(0,Z.jsx)(`button`,{className:`back-btn`,onClick:()=>t(0),children:`⬅️ Back`}),(0,Z.jsxs)(`div`,{className:`profile-header`,children:[(0,Z.jsx)(`h1`,{className:`name`,children:`서현진`}),(0,Z.jsx)(`p`,{className:`job-title`,children:`Backend / Full-Stack Developer`})]}),(0,Z.jsx)(`div`,{className:`info-container`,children:[{title:`이력`,items:[{date:`2025.07 - 2025.09`,name:`소프트넷 (계약직)`,desc:[`솔루션 사업부 기술연구소 연구원`,`ERP, 병원MIS프로그램 개발`]}]},{title:`학력`,items:[{date:`2020.03 - 2025.02`,name:`부천대학교`,desc:[`컴퓨터 소프트웨어 학과`]}]},{title:`자격증`,items:[{date:`2026.06`,name:`정보처리산업기사(필기)`,desc:[`한국산업인력공단`]},{date:`2025.08`,name:`운전면허증(2종보통)`,desc:[`서울경창청장`]}]},{title:`교육 수료`,items:[{date:`2025.11 - 2026.06`,name:`AWS 클라우드 기반 Devops 개발자 양성 과정`,desc:[`KH정보교육원`]}]}].map(e=>(0,Z.jsxs)(`div`,{className:`info-section`,children:[(0,Z.jsx)(`h2`,{className:`section-title`,children:e.title}),e.items.map(e=>(0,Z.jsxs)(`div`,{className:`info-item`,children:[(0,Z.jsx)(`span`,{className:`date`,children:e.date}),(0,Z.jsxs)(`div`,{className:`detail`,children:[(0,Z.jsx)(`div`,{className:`title`,children:e.name}),e.desc.map(e=>(0,Z.jsx)(`div`,{className:`desc`,children:e},e))]})]},e.name))]},e.title))}),(0,Z.jsxs)(`div`,{className:`info-section`,children:[(0,Z.jsx)(`h2`,{className:`section-title`,children:`기술 스택`}),(0,Z.jsx)(gd,{children:(0,Z.jsx)(`tbody`,{children:Object.entries(cd).map(([e,t])=>(0,Z.jsxs)(`tr`,{children:[(0,Z.jsx)(`th`,{children:e}),(0,Z.jsx)(`td`,{children:t})]},e))})})]})]}),(0,Z.jsxs)(hd,{children:[(0,Z.jsx)(`h2`,{className:`toc-title`,children:`Project Workspace`}),(0,Z.jsx)(`div`,{className:`project-list`,children:sd.map((e,t)=>{let n=y===t;return(0,Z.jsxs)(`div`,{className:`project-card ${n?`expanded`:``}`,onClick:()=>b(n?null:t),children:[(0,Z.jsxs)(`div`,{className:`card-header`,children:[(0,Z.jsxs)(`span`,{className:`num`,children:[`0`,t+1,`.`]}),(0,Z.jsx)(`span`,{className:`name`,children:e.title}),(0,Z.jsx)(`span`,{className:`arrow`,children:n?`▼`:`▶`})]}),n&&(0,Z.jsxs)(`div`,{className:`card-body`,children:[(0,Z.jsx)(`div`,{className:`desc-list`,children:e.shortDesc.map((e,t)=>(0,Z.jsxs)(`p`,{children:[`• `,e]},t))}),(0,Z.jsxs)(`div`,{style:{marginTop:`15px`},children:[(0,Z.jsx)(`h4`,{style:{color:`#569cd6`,marginBottom:`8px`},children:`Tech Stack`}),Object.entries(e.techStack).map(([e,t])=>(0,Z.jsxs)(`div`,{style:{fontSize:`0.85rem`,marginBottom:`4px`},children:[(0,Z.jsxs)(`span`,{style:{fontWeight:`bold`,color:`#ce9178`},children:[e,`:`,` `]}),(0,Z.jsx)(`span`,{style:{color:`#d4d4d4`},children:t})]},e))]})]})]},e.title)})}),(0,Z.jsx)(`button`,{className:`enter-btn`,onClick:()=>t(2),children:`코드 워크스페이스 입장하기 ➔`})]})]}):(0,Z.jsxs)(_d,{children:[(0,Z.jsx)(ad,{}),(0,Z.jsxs)(vd,{children:[(0,Z.jsxs)(`div`,{className:`menus`,children:[(0,Z.jsx)(`img`,{src:`https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg`,alt:`vscode`,className:`logo`}),[`File`,`Edit`,`Selection`,`View`,`Go`,`Run`,`Terminal`,`Help`].map(e=>(0,Z.jsx)(`span`,{children:e},e))]}),(0,Z.jsxs)(`div`,{className:`title`,children:[T?.name,` - Portfolio Workspace - Visual Studio Code`]}),(0,Z.jsxs)(`div`,{className:`controls`,children:[(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Yu,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn`,children:(0,Z.jsx)(Xu,{})}),(0,Z.jsx)(`span`,{className:`ctrl-btn close`,children:(0,Z.jsx)(Zu,{})})]})]}),(0,Z.jsxs)(yd,{children:[(0,Z.jsxs)(Q,{children:[(0,Z.jsx)(`div`,{className:`icon active`,children:(0,Z.jsx)(Uu,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(zu,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(Lu,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(X,{})}),(0,Z.jsx)(`div`,{className:`spacer`}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(td,{})}),(0,Z.jsx)(`div`,{className:`icon`,children:(0,Z.jsx)(Ru,{})})]}),(0,Z.jsxs)(bd,{children:[(0,Z.jsx)(xd,{children:`EXPLORER`}),(0,Z.jsx)(Sd,{children:`∨ PORTFOLIO WORKSPACE`}),(0,Z.jsx)(`div`,{className:`file-tree`,children:sd.map(e=>(0,Z.jsxs)(`div`,{children:[(0,Z.jsxs)(Cd,{onClick:()=>_(t=>({...t,[e.title]:!t[e.title]})),children:[(0,Z.jsx)(`span`,{className:`arrow`,children:g[e.title]?(0,Z.jsx)($u,{}):(0,Z.jsx)(Qu,{})}),(0,Z.jsx)(`span`,{className:`folder-icon`,children:g[e.title]?(0,Z.jsx)(Hu,{style:{color:`#dcb67a`}}):(0,Z.jsx)(Vu,{style:{color:`#dcb67a`}})}),e.title]}),g[e.title]&&e.files.map(t=>(0,Z.jsxs)(wd,{active:T?.name===t.name&&re===e.title,onClick:()=>se(e.title,t),children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:ld(t.name)}),t.name]},t.name))]},e.title))})]}),(0,Z.jsxs)(Td,{ref:te,children:[(0,Z.jsxs)(Ed,{children:[(0,Z.jsx)(`div`,{className:`tabs-wrapper`,children:n.map((e,t)=>(0,Z.jsxs)(Dd,{active:t===i,onClick:()=>a(t),children:[(0,Z.jsx)(`span`,{className:`f-icon`,children:ld(e.file.name)}),(0,Z.jsx)(`span`,{className:`f-name`,children:e.file.name}),(0,Z.jsx)(`span`,{className:`f-close`,onClick:e=>ce(e,t),children:(0,Z.jsx)(Ju,{})})]},`${e.projectTitle}-${e.file.name}-${t}`))}),(0,Z.jsxs)(Od,{children:[le&&(0,Z.jsxs)(Z.Fragment,{children:[(0,Z.jsxs)(kd,{active:o,onClick:()=>s(e=>!e),children:[(0,Z.jsx)(Gu,{style:{marginRight:`4px`}}),` 이미지`]}),(0,Z.jsxs)(kd,{active:c,onClick:()=>l(e=>!e),children:[(0,Z.jsx)(qu,{style:{marginRight:`4px`}}),` 코드`]}),(0,Z.jsx)(Ad,{})]}),(0,Z.jsx)(jd,{onClick:()=>t(1),children:`← 설명으로 돌아가기`})]})]}),(0,Z.jsxs)(Md,{children:[(0,Z.jsx)(`span`,{children:`Portfolio Workspace`}),` > `,(0,Z.jsx)(`span`,{children:re}),` `,`> `,(0,Z.jsx)(`span`,{children:T?.name})]}),(0,Z.jsxs)($,{ref:ee,children:[D&&(0,Z.jsx)(Nd,{style:{width:`100%`},children:(0,Z.jsx)(`img`,{src:T.img,alt:`preview`})}),O&&(0,Z.jsx)(Fd,{style:{width:`100%`},children:(0,Z.jsx)(bu,{language:ud(T?.type),style:xu,showLineNumbers:!0,wrapLines:!0,customStyle:{background:`transparent`,margin:0,padding:`15px 20px`,fontSize:`13px`,lineHeight:`1.5`},children:T?.code||``})}),E&&(0,Z.jsxs)(Z.Fragment,{children:[(0,Z.jsx)(Nd,{style:{width:`${f}%`},children:(0,Z.jsx)(`img`,{src:T.img,alt:`preview`})}),(0,Z.jsxs)(Pd,{onMouseDown:()=>{C.current=!0},children:[(0,Z.jsx)(`div`,{className:`line`}),(0,Z.jsx)(`div`,{className:`grip`,children:`⠿`}),(0,Z.jsx)(`div`,{className:`line`})]}),(0,Z.jsx)(Fd,{style:{flex:1},children:(0,Z.jsx)(bu,{language:ud(T?.type),style:xu,showLineNumbers:!0,wrapLines:!0,customStyle:{background:`transparent`,margin:0,padding:`15px 20px`,fontSize:`13px`,lineHeight:`1.5`},children:T?.code||``})})]})]}),(0,Z.jsx)(Id,{onMouseDown:()=>{w.current=!0},children:(0,Z.jsx)(`div`,{className:`dots`,children:`· · · · · · · · · · · · · · · · · · · ·`})}),(0,Z.jsxs)(Ld,{style:{height:`${m}px`},children:[(0,Z.jsxs)(Rd,{children:[(0,Z.jsxs)(zd,{active:u===`설명`,onClick:()=>d(`설명`),children:[(0,Z.jsx)(Iu,{style:{marginRight:`4px`}}),`화면 설명`]}),(0,Z.jsxs)(zd,{active:u===`회고`,onClick:()=>d(`회고`),children:[(0,Z.jsx)(Bu,{style:{marginRight:`4px`}}),`회고`]}),(0,Z.jsxs)(zd,{active:u===`트러블슈팅`,onClick:()=>d(`트러블슈팅`),children:[(0,Z.jsx)(Wu,{style:{marginRight:`4px`}}),`트러블슈팅`]})]}),(0,Z.jsxs)(Bd,{children:[(0,Z.jsxs)(`div`,{className:`prompt`,children:[(0,Z.jsx)(`span`,{className:`path`,children:`portfolio@macbook`}),(0,Z.jsx)(`span`,{className:`colon`,children:`:`}),(0,Z.jsxs)(`span`,{className:`dir`,children:[`~/`,re]}),u===`설명`?`$ ./explain.sh ${T?.name}`:u===`회고`?`$ cat RETROSPECTIVE.md   # ${T?.name}`:`$ cat TROUBLESHOOTING.md   # ${T?.name}`]}),(0,Z.jsxs)(`div`,{className:`output`,children:[x,(0,Z.jsx)(`span`,{className:`cursor`,children:`█`})]})]})]})]})]}),(0,Z.jsxs)(Vd,{children:[(0,Z.jsxs)(`div`,{className:`left`,children:[(0,Z.jsx)(`span`,{className:`item remote`,children:`><`}),(0,Z.jsxs)(`span`,{className:`item`,children:[(0,Z.jsx)(Lu,{style:{marginRight:`4px`}}),`main*`]}),(0,Z.jsx)(`span`,{className:`item`,children:`❌ 0 ⚠️ 0`})]}),(0,Z.jsxs)(`div`,{className:`right`,children:[(0,Z.jsx)(`span`,{className:`item`,children:`Ln 1, Col 1`}),(0,Z.jsx)(`span`,{className:`item`,children:`Spaces: 2`}),(0,Z.jsx)(`span`,{className:`item`,children:`UTF-8`}),(0,Z.jsx)(`span`,{className:`item`,children:(T?.type||``).toUpperCase()}),(0,Z.jsx)(`span`,{className:`item`,children:`Prettier ✅`}),(0,Z.jsx)(`span`,{className:`item`,children:(0,Z.jsx)(ed,{})})]})]})]})}var fd=j.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: "Consolas", "Courier New", monospace;
+  .content {
+    text-align: center;
+    animation: fadeIn 1s ease-in-out;
+  }
+  .title {
+    font-size: 3rem;
+    color: #569cd6;
+    margin-bottom: 20px;
+  }
+  .highlight {
+    color: #ff3f3f;
+    font-weight: 700;
+    font-size: 1.5rem;
+  }
+  .guide-text {
+    font-size: 0.9rem;
+    color: #858585;
+    margin-bottom: 40px;
+  }
+  .next-btn {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    background: #0e639c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    &:hover {
+      background: #1177bb;
+    }
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `,pd=j.div`
-  display: flex; width: 100%; height: 100vh; background: #1e1e1e; color: #ccc; overflow: hidden;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  background: #1e1e1e;
+  color: #ccc;
+  overflow: hidden;
 `,md=j.div`
-  width: 50%; padding: 40px 50px; background: #181818; border-right: 1px solid #333; overflow-y: auto; position: relative;
-  &::-webkit-scrollbar { width: 5px; } &::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-  .back-btn { position: absolute; top: 30px; left: 40px; background: none; border: none; color: #858585; font-size: 1rem; cursor: pointer; &:hover { color: #d4d4d4; } }
-  .profile-header { margin-bottom: 40px; .name { font-size: 2.2rem; color: #fff; margin-bottom: 5px; } .job-title { font-size: 1.2rem; color: #569cd6; } }
-  .info-container { display: flex; flex-direction: column; gap: 15px; padding-bottom: 30px; }
-  .info-section { .section-title { font-size: 1.1rem; color: #ce9178; border-bottom: 1px solid #333; padding-bottom: 8px; padding-left: 5px; margin-bottom: 15px; } }
-  .info-item { display: flex; margin-bottom: 15px; .date { min-width: 130px; font-size: 0.9rem; color: #b5cea8; font-family: "Consolas",monospace; } .detail { flex: 1; .title { font-size: 1rem; color: #d4d4d4; font-weight: bold; margin-bottom: 4px; margin-left: 10px; } .desc { font-size: 0.9rem; margin-left: 10px; color: #858585; } } }
+  width: 50%;
+  padding: 40px 50px;
+  background: #181818;
+  border-right: 1px solid #333;
+  overflow-y: auto;
+  position: relative;
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
+  .back-btn {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    background: none;
+    border: none;
+    color: #858585;
+    font-size: 1rem;
+    cursor: pointer;
+    &:hover {
+      color: #d4d4d4;
+    }
+  }
+  .profile-header {
+    margin-bottom: 40px;
+    .name {
+      font-size: 2.2rem;
+      color: #fff;
+      margin-bottom: 5px;
+    }
+    .job-title {
+      font-size: 1.2rem;
+      color: #569cd6;
+    }
+  }
+  .info-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-bottom: 30px;
+  }
+  .info-section {
+    .section-title {
+      font-size: 1.1rem;
+      color: #ce9178;
+      border-bottom: 1px solid #333;
+      padding-bottom: 8px;
+      padding-left: 5px;
+      margin-bottom: 15px;
+    }
+  }
+  .info-item {
+    display: flex;
+    margin-bottom: 15px;
+    .date {
+      min-width: 130px;
+      font-size: 0.9rem;
+      color: #b5cea8;
+      font-family: "Consolas", monospace;
+    }
+    .detail {
+      flex: 1;
+      .title {
+        font-size: 1rem;
+        color: #d4d4d4;
+        font-weight: bold;
+        margin-bottom: 4px;
+        margin-left: 10px;
+      }
+      .desc {
+        font-size: 0.9rem;
+        margin-left: 10px;
+        color: #858585;
+      }
+    }
+  }
 `,hd=j.div`
-  width: 50%; height: 100%; padding: 50px; display: flex; flex-direction: column; background: #1e1e1e;
-  .toc-title { font-size: 1.8rem; color: #4ec9b0; margin-bottom: 30px; }
-  .project-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; padding-right: 10px; &::-webkit-scrollbar { width: 8px; } &::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; } }
-  .project-card { background: #252526; border: 1px solid #333; border-radius: 6px; padding: 20px; cursor: pointer; transition: all 0.2s; &:hover { background: #2d2d2d; border-color: #569cd6; } }
-  .card-header { display: flex; align-items: center; .num { font-size: 1.2rem; color: #858585; font-family: "Consolas",monospace; margin-right: 12px; } .name { font-size: 1.2rem; font-weight: bold; color: #dcdcaa; flex: 1; } .arrow { color: #858585; } }
-  .card-body { padding-top: 10px; } .desc-list p { color: #999; font-size: 0.9rem; margin: 4px 0; }
-  .enter-btn { width: 100%; padding: 16px; font-size: 1.1rem; font-weight: bold; background: #0e639c; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 70px; &:hover { background: #1177bb; } }
+  width: 50%;
+  height: 100%;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  .toc-title {
+    font-size: 1.8rem;
+    color: #4ec9b0;
+    margin-bottom: 30px;
+  }
+  .project-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-right: 10px;
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 4px;
+    }
+  }
+  .project-card {
+    background: #252526;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    &:hover {
+      background: #2d2d2d;
+      border-color: #569cd6;
+    }
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    .num {
+      font-size: 1.2rem;
+      color: #858585;
+      font-family: "Consolas", monospace;
+      margin-right: 12px;
+    }
+    .name {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #dcdcaa;
+      flex: 1;
+    }
+    .arrow {
+      color: #858585;
+    }
+  }
+  .card-body {
+    padding-top: 10px;
+  }
+  .desc-list p {
+    color: #999;
+    font-size: 0.9rem;
+    margin: 4px 0;
+  }
+  .enter-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: #0e639c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 70px;
+    &:hover {
+      background: #1177bb;
+    }
+  }
 `,gd=j.table`
-  width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e1e1e; border: 1px solid #333; color: #d4d4d4;
-  th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #333; }
-  th { color: #ce9178; width: 25%; font-weight: bold; } td { color: #9cdcfe; }
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #d4d4d4;
+  th,
+  td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+  }
+  th {
+    color: #ce9178;
+    width: 25%;
+    font-weight: bold;
+  }
+  td {
+    color: #9cdcfe;
+  }
 `,_d=j.div`
-  display: flex; flex-direction: column; height: 100vh; width: 100%; overflow: hidden; background: #1e1e1e;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: #1e1e1e;
 `,vd=j.div`
-  height: 30px; background: #181818; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2b2b2b; user-select: none; position: relative;
-  .menus { display: flex; align-items: center; font-size: 13px; color: #ccc; .logo { width: 16px; height: 16px; margin: 0 10px; } span { padding: 4px 8px; cursor: pointer; &:hover { background: #333; border-radius: 4px; } } }
-  .title { font-size: 12px; color: #999; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; }
-  .controls { display: flex; height: 100%; .ctrl-btn { display: flex; align-items: center; justify-content: center; width: 45px; height: 100%; cursor: pointer; font-size: 12px; color: #ccc; &:hover { background: #333; } &.close:hover { background: #e81123; color: white; } } }
+  height: 30px;
+  background: #181818;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #2b2b2b;
+  user-select: none;
+  position: relative;
+  .menus {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #ccc;
+    .logo {
+      width: 16px;
+      height: 16px;
+      margin: 0 10px;
+    }
+    span {
+      padding: 4px 8px;
+      cursor: pointer;
+      &:hover {
+        background: #333;
+        border-radius: 4px;
+      }
+    }
+  }
+  .title {
+    font-size: 12px;
+    color: #999;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .controls {
+    display: flex;
+    height: 100%;
+    .ctrl-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 45px;
+      height: 100%;
+      cursor: pointer;
+      font-size: 12px;
+      color: #ccc;
+      &:hover {
+        background: #333;
+      }
+      &.close:hover {
+        background: #e81123;
+        color: white;
+      }
+    }
+  }
 `,yd=j.div`
-  display: flex; flex: 1; height: calc(100vh - 52px);
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 52px);
 `,Q=j.div`
-  width: 48px; background: #333; display: flex; flex-direction: column; align-items: center; padding-top: 10px;
-  .icon { font-size: 22px; margin-bottom: 15px; cursor: pointer; opacity: 0.4; transition: 0.2s; display: flex; align-items: center; justify-content: center; width: 100%; height: 40px; &:hover { opacity: 1; } &.active { opacity: 1; border-left: 2px solid #007acc; color: #007acc; } }
-  .spacer { flex: 1; }
+  width: 48px;
+  background: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  .icon {
+    font-size: 22px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    &:hover {
+      opacity: 1;
+    }
+    &.active {
+      opacity: 1;
+      border-left: 2px solid #007acc;
+      color: #007acc;
+    }
+  }
+  .spacer {
+    flex: 1;
+  }
 `,bd=j.nav`
-  width: 250px; background: #252526; border-right: 1px solid #1e1e1e; display: flex; flex-direction: column;
-  .file-tree { flex: 1; overflow-y: auto; &::-webkit-scrollbar { width: 10px; } &::-webkit-scrollbar-thumb { background: #464646; border: 2px solid #252526; border-radius: 5px; } }
+  width: 250px;
+  background: #252526;
+  border-right: 1px solid #1e1e1e;
+  display: flex;
+  flex-direction: column;
+  .file-tree {
+    flex: 1;
+    overflow-y: auto;
+    &::-webkit-scrollbar {
+      width: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #464646;
+      border: 2px solid #252526;
+      border-radius: 5px;
+    }
+  }
 `,xd=j.div`
-  padding: 15px 20px 10px; font-size: 11px; color: #bbb; letter-spacing: 1px;
+  padding: 15px 20px 10px;
+  font-size: 11px;
+  color: #bbb;
+  letter-spacing: 1px;
 `,Sd=j.div`
-  padding: 5px 10px; font-size: 11px; font-weight: bold; color: #ccc; background: #2a2d2e; cursor: pointer;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #ccc;
+  background: #2a2d2e;
+  cursor: pointer;
 `,Cd=j.div`
-  padding: 6px 10px; cursor: pointer; font-size: 13px; font-weight: bold; color: #ccc; display: flex; align-items: center; gap: 6px; &:hover { background: #2a2d2e; }
-  .arrow { display: flex; align-items: center; font-size: 12px; color: #aaa; } .folder-icon { display: flex; align-items: center; font-size: 16px; }
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  &:hover {
+    background: #2a2d2e;
+  }
+  .arrow {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #aaa;
+  }
+  .folder-icon {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+  }
 `,wd=j.div`
-  padding: 5px 10px 5px 35px; cursor: pointer; font-size: 13px; color: ${e=>e.active?`#fff`:`#ccc`}; background: ${e=>e.active?`#37373d`:`transparent`}; border-left: 1px solid ${e=>e.active?`#007acc`:`transparent`}; display: flex; align-items: center; gap: 8px; &:hover { background: ${e=>e.active?`#37373d`:`#2a2d2e`}; } .f-icon { display: flex; align-items: center; }
+  padding: 5px 10px 5px 35px;
+  cursor: pointer;
+  font-size: 13px;
+  color: ${e=>e.active?`#fff`:`#ccc`};
+  background: ${e=>e.active?`#37373d`:`transparent`};
+  border-left: 1px solid ${e=>e.active?`#007acc`:`transparent`};
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  &:hover {
+    background: ${e=>e.active?`#37373d`:`#2a2d2e`};
+  }
+  .f-icon {
+    display: flex;
+    align-items: center;
+  }
 `,Td=j.main`
-  flex: 1; display: flex; flex-direction: column; min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 `,Ed=j.div`
-  display: flex; background: #252526; height: 35px; justify-content: space-between; overflow: hidden;
-  .tabs-wrapper { display: flex; flex: 1; overflow-x: auto; &::-webkit-scrollbar { height: 0; } }
+  display: flex;
+  background: #252526;
+  height: 35px;
+  justify-content: space-between;
+  overflow: hidden;
+  .tabs-wrapper {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    &::-webkit-scrollbar {
+      height: 0;
+    }
+  }
 `,Dd=j.div`
-  background: ${e=>e.active?`#1e1e1e`:`#2d2d2d`}; color: ${e=>e.active?`#fff`:`#999`}; border-top: 1px solid ${e=>e.active?`#007acc`:`transparent`}; border-right: 1px solid #1e1e1e; padding: 0 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; min-width: 140px; max-width: 200px; &:hover { background: ${e=>e.active?`#1e1e1e`:`#323232`}; color: #fff; }
-  .f-icon { display: flex; align-items: center; flex-shrink: 0; } .f-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .f-close { display: flex; align-items: center; font-size: 14px; opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px; flex-shrink: 0; color: #aaa; }
-  &:hover .f-close { opacity: 1; } .f-close:hover { background: #333; color: #fff; }
+  background: ${e=>e.active?`#1e1e1e`:`#2d2d2d`};
+  color: ${e=>e.active?`#fff`:`#999`};
+  border-top: 1px solid ${e=>e.active?`#007acc`:`transparent`};
+  border-right: 1px solid #1e1e1e;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 140px;
+  max-width: 200px;
+  &:hover {
+    background: ${e=>e.active?`#1e1e1e`:`#323232`};
+    color: #fff;
+  }
+  .f-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .f-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .f-close {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    opacity: 0;
+    transition: 0.15s;
+    border-radius: 4px;
+    padding: 2px;
+    flex-shrink: 0;
+    color: #aaa;
+  }
+  &:hover .f-close {
+    opacity: 1;
+  }
+  .f-close:hover {
+    background: #333;
+    color: #fff;
+  }
 `,Od=j.div`
-  display: flex; align-items: center; padding: 0 8px; gap: 4px; background: #252526; flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+  background: #252526;
+  flex-shrink: 0;
 `,kd=j.button`
-  background: ${e=>e.active?`#37373d`:`transparent`}; color: ${e=>e.active?`#fff`:`#888`}; border: 1px solid ${e=>e.active?`#555`:`#3c3c3c`}; cursor: pointer; font-size: 11px; padding: 3px 8px; border-radius: 3px; display: flex; align-items: center; white-space: nowrap; &:hover { background: #2a2d2e; color: #fff; }
+  background: ${e=>e.active?`#37373d`:`transparent`};
+  color: ${e=>e.active?`#fff`:`#888`};
+  border: 1px solid ${e=>e.active?`#555`:`#3c3c3c`};
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  &:hover {
+    background: #2a2d2e;
+    color: #fff;
+  }
 `,Ad=j.div`
-  width: 1px; height: 16px; background: #444; margin: 0 4px;
+  width: 1px;
+  height: 16px;
+  background: #444;
+  margin: 0 4px;
 `,jd=j.button`
-  background: transparent; color: #9cdcfe; border: 1px solid #3c3c3c; cursor: pointer; font-size: 11px; padding: 3px 8px; border-radius: 3px; display: flex; align-items: center; white-space: nowrap; &:hover { background: #2a2d2e; color: #fff; border-color: #569cd6; }
+  background: transparent;
+  color: #9cdcfe;
+  border: 1px solid #3c3c3c;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  &:hover {
+    background: #2a2d2e;
+    color: #fff;
+    border-color: #569cd6;
+  }
 `,Md=j.div`
-  padding: 4px 15px; font-size: 12px; color: #999; background: #1e1e1e; border-bottom: 1px solid #2b2b2b;
-  span { cursor: pointer; &:hover { color: #ccc; text-decoration: underline; } }
+  padding: 4px 15px;
+  font-size: 12px;
+  color: #999;
+  background: #1e1e1e;
+  border-bottom: 1px solid #2b2b2b;
+  span {
+    cursor: pointer;
+    &:hover {
+      color: #ccc;
+      text-decoration: underline;
+    }
+  }
 `,$=j.div`
-  flex: 1; display: flex; overflow: hidden;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 `,Nd=j.div`
-  background: #1e1e1e; display: flex; align-items: center; justify-content: center; padding: 20px; flex-shrink: 0; overflow: hidden; border-right: 1px solid #2b2b2b;
-  img { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+  background: #1e1e1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-right: 1px solid #2b2b2b;
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
 `,Pd=j.div`
-  width: 6px; background: #1e1e1e; cursor: col-resize; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; z-index: 10;
-  .line { width: 1px; height: 30%; background: #3c3c3c; } .grip { color: #555; font-size: 10px; line-height: 1; user-select: none; }
-  &:hover { background: #007acc22; } &:hover .line { background: #007acc; } &:hover .grip { color: #007acc; }
+  width: 6px;
+  background: #1e1e1e;
+  cursor: col-resize;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  z-index: 10;
+  .line {
+    width: 1px;
+    height: 30%;
+    background: #3c3c3c;
+  }
+  .grip {
+    color: #555;
+    font-size: 10px;
+    line-height: 1;
+    user-select: none;
+  }
+  &:hover {
+    background: #007acc22;
+  }
+  &:hover .line {
+    background: #007acc;
+  }
+  &:hover .grip {
+    color: #007acc;
+  }
 `,Fd=j.div`
-  background: #1e1e1e; overflow-y: auto; overflow-x: hidden; min-width: 0;
-  &::-webkit-scrollbar { width: 14px; } &::-webkit-scrollbar-thumb { background: #464646; border: 4px solid #1e1e1e; border-radius: 8px; }
+  background: #1e1e1e;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+  &::-webkit-scrollbar {
+    width: 14px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #464646;
+    border: 4px solid #1e1e1e;
+    border-radius: 8px;
+  }
 `,Id=j.div`
-  height: 6px; background: #252526; cursor: row-resize; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-top: 1px solid #2b2b2b; border-bottom: 1px solid #2b2b2b; user-select: none;
-  .dots { font-size: 10px; color: #555; letter-spacing: 2px; line-height: 1; }
-  &:hover { background: #2a2d2e; } &:hover .dots { color: #007acc; }
+  height: 6px;
+  background: #252526;
+  cursor: row-resize;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #2b2b2b;
+  border-bottom: 1px solid #2b2b2b;
+  user-select: none;
+  .dots {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  &:hover {
+    background: #2a2d2e;
+  }
+  &:hover .dots {
+    color: #007acc;
+  }
 `,Ld=j.div`
-  background: #1e1e1e; display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
+  background: #1e1e1e;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
 `,Rd=j.div`
-  display: flex; padding: 0 20px; gap: 2px; border-bottom: 1px solid #2b2b2b; align-items: stretch; flex-shrink: 0;
-  span { padding: 7px 10px; font-size: 11px; cursor: pointer; letter-spacing: 0.5px; display: flex; align-items: center; white-space: nowrap; &.inactive { color: #888; &:hover { color: #ccc; } } }
+  display: flex;
+  padding: 0 20px;
+  gap: 2px;
+  border-bottom: 1px solid #2b2b2b;
+  align-items: stretch;
+  flex-shrink: 0;
+  span {
+    padding: 7px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    &.inactive {
+      color: #888;
+      &:hover {
+        color: #ccc;
+      }
+    }
+  }
 `,zd=j.span`
-  color: ${e=>e.active?`#e7e7e7`:`#888`} !important; border-bottom: ${e=>e.active?`1px solid #e7e7e7`:`none`} !important; background: ${e=>e.active?`#1e1e1e22`:`transparent`}; border-radius: 3px 3px 0 0; &:hover { color: #ccc !important; background: #2a2d2e; }
+  color: ${e=>e.active?`#e7e7e7`:`#888`} !important;
+  border-bottom: ${e=>e.active?`1px solid #e7e7e7`:`none`} !important;
+  background: ${e=>e.active?`#1e1e1e22`:`transparent`};
+  border-radius: 3px 3px 0 0;
+  &:hover {
+    color: #ccc !important;
+    background: #2a2d2e;
+  }
 `,Bd=j.div`
-  padding: 10px 20px; overflow-y: auto; flex: 1; font-family: "Consolas","Courier New",monospace;
-  &::-webkit-scrollbar { width: 14px; } &::-webkit-scrollbar-thumb { background: #464646; border: 4px solid #1e1e1e; border-radius: 8px; }
-  .prompt { font-size: 13px; color: #ccc; margin-bottom: 8px; .path { color: #50fa7b; font-weight: bold; } .colon { color: #f8f8f2; } .dir { color: #8be9fd; font-weight: bold; } }
-  .output { font-size: 13px; color: #ccc; white-space: pre-wrap; line-height: 1.6; .cursor { animation: blink 1s step-end infinite; } }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  padding: 10px 20px;
+  overflow-y: auto;
+  flex: 1;
+  font-family: "Consolas", "Courier New", monospace;
+  &::-webkit-scrollbar {
+    width: 14px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #464646;
+    border: 4px solid #1e1e1e;
+    border-radius: 8px;
+  }
+  .prompt {
+    font-size: 13px;
+    color: #ccc;
+    margin-bottom: 8px;
+    .path {
+      color: #50fa7b;
+      font-weight: bold;
+    }
+    .colon {
+      color: #f8f8f2;
+    }
+    .dir {
+      color: #8be9fd;
+      font-weight: bold;
+    }
+  }
+  .output {
+    font-size: 13px;
+    color: #ccc;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    .cursor {
+      animation: blink 1s step-end infinite;
+    }
+  }
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
 `,Vd=j.div`
-  height: 22px; background: #007acc; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: white; padding: 0 10px; font-family: "Segoe UI",sans-serif; user-select: none;
-  .left, .right { display: flex; align-items: center; gap: 15px; height: 100%; }
-  .item { display: flex; align-items: center; cursor: pointer; height: 100%; padding: 0 4px; &:hover { background: rgba(255,255,255,0.2); border-radius: 2px; } }
-  .remote { background: #16825d; padding: 0 8px; height: 100%; display: flex; align-items: center; margin-left: -10px; font-weight: bold; }
+  height: 22px;
+  background: #007acc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: white;
+  padding: 0 10px;
+  font-family: "Segoe UI", sans-serif;
+  user-select: none;
+  .left,
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    height: 100%;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    height: 100%;
+    padding: 0 4px;
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+    }
+  }
+  .remote {
+    background: #16825d;
+    padding: 0 8px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin-left: -10px;
+    font-weight: bold;
+  }
 `;(0,y.createRoot)(document.getElementById(`root`)).render((0,Z.jsx)(dd,{}));
