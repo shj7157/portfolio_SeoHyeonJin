@@ -14,7 +14,6 @@ import {
   VscChevronRight,
   VscFolder,
   VscFolderOpened,
-  VscSplitHorizontal,
   VscDatabase,
   VscMarkdown,
   VscChromeMinimize,
@@ -24,6 +23,8 @@ import {
   VscClose,
   VscFile,
   VscTerminal,
+  VscFileMedia,
+  VscCode,
 } from "react-icons/vsc";
 import { FaJava, FaJsSquare } from "react-icons/fa";
 
@@ -36,152 +37,233 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// ─── 터미널 전용 데이터 (회고 / 트러블슈팅) ────────────────────────────────
-const terminalData = {
-  Sloway: {
-    회고: `#  프로젝트 회고
+// ─── 파일별 터미널 데이터 (key: "프로젝트명::파일명") ────────────────────────
+const fileTerminalData = {
+  "Sloway::통계 알고리즘.sql": {
+    회고: `# [통계 알고리즘] 파일 회고
 
-## 성능 최적화 및 데이터 조회 관련
+## 좋았던 점
+- Materialized View를 활용해 통계 데이터를 디스크에 저장하고, 스케줄러로 10분 주기 갱신하는 구조를 설계한 것이 핵심이었습니다.
+- 실시간 조회 대비 조회 속도를 평균 28.3초 → 0.38초로 약 98.8% 개선하는 성과를 냈습니다.
 
-### 좋았던 점
-- 대용량 데이터 환경에서 조회 속도 저하 문제를 해결하기 위해 Materialized view를 활용한 캐싱 전략과 데이터베이스 인덱스 튜닝을 도입하여 쿼리 성능을 획기적으로 개선하는 값진 경험을 했습니다.
-- 실행 계획을 분석하여 병목이 생기는 테이블에 적절한 복합 인덱스를 설정하고, 자주 조회되는 정적 데이터는 캐시 레이어로 분리함으로써 DB 뷰 및 복잡한 조건 검색의 응답 시간을 평균 28.3초에서 평균 0.4초까지 단축했습니다.
+## 아쉬운 점
+- 초기 아키텍처 설계 단계에서 대용량 데이터 적재 및 고빈도 조회 상황을 예측하지 못해, 중반부에 급하게 구조를 변경해야 했습니다.
+- 10분 주기 갱신이라는 실시간성 포기가 비즈니스적으로 최선인지에 대한 검토가 부족했습니다.
 
-### 아쉬운 점
-- 초기 아키텍처 설계 단계에서 대용량 데이터 적재 및 고빈도 조회 상황을 정밀하게 예측하지 못해, 프로젝트 중반부에 특정 기능(조회/통계/랭킹 등)에서 심각한 데이터 조회 속도 저하 문제를 겪었습니다.
-
-### 시도해볼 만한 점
-- 향후 프로젝트에서는 초기 테이블 스키마 설계 단계부터 데이터 조회 빈도와 대략적인 볼륨을 미리 상정하여 인덱스 전략을 선제적으로 수립하겠습니다.
-- 정합성 보장 로직을 더 정교하게 고도화하여 캐시 스탬피드 현상을 방지하는 구조를 도입해 보고 싶습니다.
-
----
-
-## 팀 내부 소통 및 협의 관련
-
-### 좋았던 점
-- 기술적 이슈나 아키텍처 방향성에 대해 팀원 간의 활발한 피드백이 오갔으며, 서로의 의견을 존중하는 건강한 개발 문화 속에서 작업할 수 있었습니다.
-
-### 아쉬운 점
-- 개발을 진행하면서 특정 기능의 구현 방식이나 우선순위에 대해 팀원 간에 생각하는 방향성과 관점이 달라 초기 의견 조율 과정에서 다소 팽팽한 의견 대립이나 병목이 발생하기도 했습니다.
-
-### 시도해볼 만한 점
-- 각자 생각하는 방향성이 다를 때 고집을 부리기보다, 적극적인 기술 공유와 기술 문서 기반의 협의를 통해 싱크를 맞췄습니다.
-- 다음 프로젝트에서는 기획 및 구체적인 스펙 확정 단계에서 화면 설계서나 API 명세를 더 세밀하게 맞추어, 싱크가 어긋나는 타이밍을 최소화하겠습니다.
-
----
-
-## 회고를 마치며
-단순히 기능 구현에 그치지 않고, 데이터 조회 성능 저하라는 실무적인 문제를 캐싱과 인덱스 튜닝을 통해 직접 돌파해 보며 백엔드 개발자로서 크게 성장할 수 있었던 프로젝트였습니다.`,
-    트러블슈팅: `# Trouble Shooting: 대용량 통계 데이터 조회 성능 최적화
-
-## 1. 배경 및 문제 상황
-서비스 내에서 대용량 데이터를 기반으로 대시보드 및 통계 데이터를 실시간으로 조회하는 기능이 있었습니다.
-하지만 데이터 누적량이 증가함에 따라 실시간 통계 조회 시 평균 28.3초, 심할 때는 최대 32.1초까지 소요되는 심각한 성능 저하 현상이 발생했습니다.
-
-웹 서비스 환경에서 30초에 육박하는 응답 시간은 사용자에게 빈 화면이나 무한 로딩을 보여주게 되어
-사용자 경험(UX)을 치명적으로 해치고, 브라우저의 Connection Timeout을 유발하는 화급한 리스크였습니다.
-
----
-
-## 2. 원인 분석
-성능 저하의 원인을 파악하기 위해 문제가 되는 통계 쿼리를 통해 데이터베이스 실행 계획을 분석했습니다.
-
-- 인덱스 부재 및 전체 테이블 조회: 수많은 조인과 대규모 데이터 정렬, 그룹화가 복합적으로 일어나는 쿼리였음에도 불구하고,
-  복합 인덱스가 제대로 설정되어 있지 않아 Full Table Scan이 발생하고 있었습니다.
-- 실시간 연산의 한계: 매 요청마다 수백만 건에 달하는 로우를 실시간으로 집계하고 연산하는 구조 자체가 데이터베이스 CPU에 엄청난 과부하를 주고 있었습니다.
-
----
-
-## 3. 단계별 개선 과정
-
-### [1단계] 쿼리 튜닝 및 인덱스 최적화
-- 조치: 쿼리 조건절과 그룹화에 자주 사용되는 핵심 컬럼들을 조합하여 최적의 복합 인덱스를 설계하고 반영했습니다.
-- 결과: 평균 12.4초로 단축 (약 2배 이상 성능 향상). 아직 사용자에게 실시간 제공하기엔 무거운 수치였습니다.
-
-### [2단계] 캐싱 전략 및 데이터 구조화
-- 조치: 통계 데이터의 특성상 '완벽한 실시간성'보다는 '정확한 주기별 집계(분 단위)'가 더 중요하다는 비즈니스적 판단을 내렸습니다.
-- 구현: Spring Boot의 Scheduler 기능을 활용하여, 10분 주기로 백그라운드에서 통계 배치 쿼리가 돌며 집계 테이블을 갱신하도록 아키텍처를 전면 리팩토링했습니다.
-
----
-
-## 4. 최종 성과
-
-- 조회 속도: 평균 28.3초 → 0.38초 (약 98.8% 성능 향상)
-- 사용자 경험 극대화: 무한 로딩에 가깝던 통계 페이지가 클릭과 동시에 렌더링되는 쾌적한 환경을 구축했습니다.
-- 시스템 안정성: 데이터베이스의 피크 타임 CPU 점유율을 현저히 낮추어 다른 핵심 비즈니스 로직의 트랜잭션 안정성까지 확보했습니다.`,
-  },
-  "Task-Flow": {
-    회고: `# 프로젝트 회고
-
-## 프로젝트 기간 및 일정 관리 회고
-- 아쉬웠던 점: 프로젝트 기간이 짧아 기획했던 모든 기능을 완벽하게 구현하는 데 어려움이 있었습니다.
-  특히 기능 간의 의존성을 사전에 면밀히 파악하지 못해 병목 현상이 발생했고, 이로 인해 팀원 간 구현 타이밍이 어긋나는 등 전체적인 완성도 측면에서 아쉬움이 남습니다.
-- 배운 점: 공동의 목표를 달성하기 위해 각자의 역할을 수행하며, 팀원들과 끊임없이 피드백을 교환하고 소통하는 과정의 중요성을 체득했습니다.
-
-## 향후 개선 및 다짐
-1. 체계적인 마일스톤 관리: 기획 단계에서부터 기능 간의 선후 관계를 명확히 정의하고, 구현 순서에 우선순위를 부여하여 리스크를 최소화하겠습니다.
-2. 주도적인 소통과 협업: 중간 점검을 생활화하고 API/데이터 명세를 세밀하게 정의하여 싱크가 어긋나는 타이밍을 최소화하겠습니다.
-3. 책임감 있는 개발자: 이번 경험을 자양분 삼아, 앞으로는 더욱 체계적인 일정 관리와 주도적인 자세로 팀의 목표를 향해 기여하는 개발자로 성장하겠습니다.
-
----
-
-## 회고를 마치며
-단순한 기능 구현을 넘어 시간 관리와 협업의 가치를 깊이 깨달은 소중한 시간이었습니다.
-이번 프로젝트에서 얻은 교훈을 바탕으로, 앞으로 더 단단하고 책임감 있는 개발자가 되겠습니다.`,
-    트러블슈팅: `# 트러블슈팅: 권한 로직 개선을 통한 쿼리 성능 최적화
+## 시도해볼 만한 점
+- 향후에는 초기 스키마 설계 단계부터 인덱스 전략을 선제적으로 수립하겠습니다.
+- 캐시 스탬피드 현상을 방지하는 정합성 보장 로직을 더 정교하게 고도화하고 싶습니다.`,
+    트러블슈팅: `# [통계 알고리즘] 트러블슈팅: 대용량 통계 조회 성능 최적화
 
 ## 문제 상황
-- 권한 정책의 모호성: '마일스톤은 담당자만 열람 가능'한 반면 '체크리스트는 누구나 열람 가능'한 상이한 권한 정책이 혼재했습니다.
-- 성능 저하 및 병목: 체크리스트 조회 시 권한 확인을 위해 불필요한 JOIN 연산이 매번 발생했습니다.
-- 데이터 정합성 이슈: 복잡한 권한 검증 로직으로 인해 N+1 문제 발생 위험이 높고, 쿼리 복잡도가 증가했습니다.
+통계 데이터를 실시간으로 조회 시 평균 28.3초, 최대 32.1초까지 소요되는 성능 저하가 발생했습니다.
+웹 서비스 환경에서 30초에 육박하는 응답 시간은 브라우저 Connection Timeout을 유발하는 심각한 리스크였습니다.
+
+## 원인 분석
+- 인덱스 부재: 복합 인덱스가 설정되지 않아 Full Table Scan이 발생했습니다.
+- 실시간 연산 과부하: 수백만 건 로우를 매 요청마다 집계·연산하는 구조가 DB CPU에 극심한 부하를 주고 있었습니다.
 
 ## 해결 과정
-- 권한 정책 재정립: 팀원들과의 기술 협의를 통해 '권한의 일관성'을 우선순위로 설정했습니다.
-- 데이터 접근 제어 최적화: 유저가 생성할 수 있는 데이터의 범위를 프로젝트 및 부서 단위로 명확하게 제한했습니다.
-- 테이블 구조 재설계: 권한 체크를 위해 복잡하게 얽혀있던 테이블 관계를 단순화하고, 인덱스 활용도가 높은 구조로 데이터 모델링을 변경했습니다.
+### 1단계 - 인덱스 최적화
+조건절과 그룹화에 자주 쓰이는 컬럼들로 복합 인덱스를 설계 → 평균 12.4초로 단축 (2배 이상 개선)
 
-## 결과
-- 쿼리 효율성 개선: 복잡한 권한 JOIN 구조를 단순화하여 조회 쿼리의 응답 속도를 향상시켰습니다.
-- 보안성 강화: 일관된 권한 정책 적용으로 데이터 접근 제어의 안전성을 확보했습니다.
-- 유지보수 용이성: 불필요한 N+1 쿼리 위험 요소를 제거하여 코드 가독성 및 유지보수 편의성을 증대시켰습니다.`,
+### 2단계 - Materialized View 도입
+- 통계 데이터는 완벽한 실시간성보다 주기별 집계가 중요하다는 판단으로 구체화 뷰 패턴 도입
+- Spring Boot Scheduler로 10분 주기 배치 갱신
+
+## 최종 결과
+- 조회 속도: 평균 28.3초 → 0.38초 (98.8% 향상)
+- DB 피크타임 CPU 점유율 대폭 감소로 다른 핵심 트랜잭션 안정성도 동시 확보`,
   },
-  "Trip-Tracks": {
-    회고: `# 프로젝트를 마치며: 학습과 협업의 조화
+  "Sloway::워크앤스테이 상세.java": {
+    회고: `# [워크앤스테이 상세] 파일 회고
 
-## 새로운 도전을 통한 성장
-이번 프로젝트는 저에게 있어 첫 번째 장기 프로젝트이자 도전의 연속이었습니다.
-단순히 기존에 알고 있던 지식을 활용하는 것에 그치지 않고,
-매 순간 새로운 기술을 탐구하고 실무에 적용하는 '공부하며 구현하는' 개발 과정을 경험했습니다.
+## 좋았던 점
+- QueryDSL을 활용해 안전한 동적 쿼리를 작성하고, 서브쿼리로 최신 HOST_PLACE를 안정적으로 특정하는 패턴을 익혔습니다.
+- 통계 카드(매출·예약수·평점)를 별도 메서드로 분리해 단일 책임 원칙을 지킨 코드 구조가 만족스러웠습니다.
 
-특히 처음 접해보는 Node.js 환경에서 백엔드 작업을 진행하며, express-session을 활용한 세션 관리 로직을 직접 구현해 보는 등 기술적 스펙트럼을 넓힐 수 있는 값진 시간이었습니다.
-낯선 기술을 마주했을 때 끝까지 포기하지 않고 레퍼런스를 서칭하며 스스로 문제 해결 능력을 키워나간 경험은 개발자로서 한 단계 성장하는 계기가 되었습니다.
+## 아쉬운 점
+- fetchBasicInfo, fetchSummaryCard 등 여러 쿼리를 순차 실행하는 구조여서, 트래픽이 높아질 경우 DB 커넥션 점유 시간이 길어질 수 있다는 우려가 있습니다.
 
-## 최고의 팀워크와 기능 분배
-- 원활한 소통: 팀원들 간의 유대감이 좋아 막히는 부분이 있을 때 언제든 자유롭게 질문하고 피드백을 주고받을 수 있는 환경이 조성되었습니다.
-- 효율적인 기능 분배: 각자의 강점을 살린 기능 분배를 통해 프로젝트의 속도와 완성도를 동시에 잡을 수 있었습니다.
-
----
-
-이번 프로젝트는 저에게 기술적인 성취감뿐만 아니라, '함께 만드는 가치'가 무엇인지 알려준 소중한 기회였습니다.`,
-    트러블슈팅: `# 트러블슈팅: SSH 인증 및 네트워크 방화벽 이슈 해결
+## 시도해볼 만한 점
+- 향후에는 비동기 처리나 배치 조회로 DB 왕복 횟수를 줄이는 방향을 고민해 보겠습니다.`,
+    트러블슈팅: `# [워크앤스테이 상세] 트러블슈팅: 다중 JOIN 성능 및 데이터 생명주기 관리
 
 ## 문제 상황
-- SSH 프로세스 이해 부족: 배포 환경에서 팀원 전원이 SSH 인증 메커니즘에 대한 미숙지로 인해 서버 접근이 불가능한 상황이 발생했습니다.
-- 배포 지연: 개발 환경에서 배포 환경으로 넘어가는 과정에서 네트워크 통신 차단으로 인해 개발 업무 전체가 중단되는 병목 현상이 발생했습니다.
+워크앤스테이 상세 대시보드는 기본정보·통계카드·편의시설·최근예약 등 여러 종류의 데이터를 한 화면에서 보여줘야 했습니다.
+이 과정에서 다중 JOIN이 발생하는 복잡한 테이블 구조로 인해 조회 성능 저하 문제가 발생했습니다.
+
+## 원인 분석
+- place_summary 미적용: Materialized View 도입 전 원본 테이블 직접 다중 JOIN으로 조회해 속도 저하 발생
+- 검수 상태 관리 부재: 수정 버튼을 상태에 따라 조건부 렌더링하지 않아 검수 중인 유닛도 수정이 가능한 버그 존재
 
 ## 해결 과정
-- 프로토콜 및 정책 분석: SSH 프로토콜의 인증 방식과 네트워크 방화벽 정책을 정밀하게 리서치했습니다.
-- 방화벽 인프라 최적화: 서버 인바운드 및 아웃바운드 포트 정책을 보안 지침에 맞춰 재구성했습니다.
-- SSH 키 관리 체계 수립: 서버 접속을 위한 권한 관리 가이드라인 및 안전한 키 배포 방안을 마련했습니다.
+- 알고리즘을 위해 설계된 place_summary (Materialized View)를 활용해 다중 JOIN 없이 이미 집계된 데이터를 조회하도록 변경
+- hostPlaceEntity.status를 조회하여 PENDING(검수대기) 상태에서는 수정 버튼을 숨기는 조건부 렌더링 구현
 
 ## 결과
-- 운영 환경 정상화: 팀원 전원의 서버 접속 문제를 해결하여 즉시 배포 가능한 환경을 구축했습니다.
-- 팀 기술 자산화: SSH 접속 가이드 및 방화벽 설정 매뉴얼을 작성하여 팀 내부 메신저에 배포, 향후 발생 가능한 유사 이슈에 대한 대응력을 확보했습니다.
-- 운영 효율성 증대: 기술 문서 공유를 통해 팀원들의 인프라 이해도를 높이고, 인프라 이슈로 인한 커뮤니케이션 리소스를 대폭 절감시켰습니다.`,
+- 상세 페이지 조회 속도 대폭 개선 (최소 : 6.2초, 최대 : 12.4초 -> 최소 : 0.3초, 최대 0.9초)
+- 검수 프로세스 무결성 확보`,
+  },
+  "Sloway::검수상세 페이지.java": {
+    회고: `# [검수상세 페이지] 파일 회고
+
+## 좋았던 점
+- AWS S3를 통해 이미지를 관리하여 서버 부하를 분산하고 확장성 있는 미디어 인프라를 구축한 경험이 값졌습니다.
+- 이미지·편의시설·사무공간 편의시설을 별도 쿼리로 분리하여 조회 후 DTO에 주입하는 구조가 명확했습니다.
+
+## 아쉬운 점
+- 이미지·편의시설 데이터를 DTO 생성 후 별도로 set하는 방식이라 쿼리 호출이 N번 발생하는 구조입니다. 배치 처리 또는 IN 절 조회로 개선 여지가 있습니다.
+
+## 시도해볼 만한 점
+- 검수 체크리스트 검증 로직을 더 세밀하게 고도화하여, 항목별 상세 검증 결과를 어드민 화면에서 확인할 수 있도록 개선해 보겠습니다.`,
+    트러블슈팅: `# [검수상세 페이지] 트러블슈팅: 검수 이력 관리 및 이미지 처리
+
+## 문제 상황
+- 검수 이력이 여러 건 쌓이는 구조에서 항상 "최신 대기(PENDING) 이력"만을 조회해야 하는 요구사항이 있었습니다.
+- 이미지와 편의시설 데이터가 워크앤스테이와 워크오피스에 분산되어 있어 통합 조회가 복잡했습니다.
+
+## 원인 분석
+- HOST_PLACE 테이블에 이력이 누적되는 구조라 단순 JOIN으로는 최신 건만 가져오기 어려웠습니다.
+- 워크오피스 편의시설과 워크앤스테이 편의시설이 별도 테이블로 관리되어 중복 데이터 가능성이 있었습니다.
+
+## 해결 과정
+- JPAExpressions 서브쿼리로 MAX(no) = 최신 이력 ID를 구한 뒤 해당 건만 JOIN하는 패턴 적용
+(Auto increase 되는 Sequence Number값을 사용하기에 시도가능한 방법)
+- Stream.concat으로 두 편의시설 리스트를 병합 후 Collectors.toMap으로 중복 제거
+
+## 결과
+- 항상 정확한 최신 검수 대기 이력만 조회되도록 보장
+- 중복 없는 통합 편의시설 목록 제공`,
+  },
+  "Task-Flow::프로젝트 업데이트.java": {
+    회고: `# [프로젝트 업데이트] 파일 회고
+
+## 좋았던 점
+- update 메서드 내부를 validateProj·updateProj·updateProjDept·updateProjSche 등 작은 private 메서드로 쪼개어 단일 책임 원칙을 준수하여 가독성과 유지보수성을 높였습니다.
+- 담당자 존재 여부를 먼저 체크하고, 없으면 insert·있으면 update하는 upsert 패턴을 적용하여 DB 접근 효율을 높이고 비즈니스 로직을 단순화했습니다.
+
+## 아쉬운 점
+- 일정 내 기능 구현을 우선순위로 두다 보니, 유효성 검증 로직(validateProj)의 예외 케이스를 더 촘촘하게 정의하지 못한 점이 아쉽습니다.
+- 실시간으로 반영되는 기능들이 많았습니다. 웹소켓을 통한 실시간 반영이 아닌 api의 응답값에 따른 화면 리랜더링이라는 점이 아쉬웠습니다.
+- 각 update 메서드에서 영향받은 행의 수를 검증하는 예외 처리 로직이 중복되었습니다. AOP나 커스텀 예외 유틸로 분리했다면 중복을 줄이고 핵심 로직에만 집중할 수 있었을 것입니다.
+
+## 시도해볼 만한 점
+- 다음 프로젝트에서는 @Transactional 롤백 시나리오를 더 세밀하게 테스트하겠습니다.
+- API 폴링 방식의 한계를 극복하기 위해, 웹소켓 또는 STOMP를 활용한 실시간 반응형 웹페이지 구현을 도입해 보겠습니다.`,
+    트러블슈팅: `# [프로젝트 업데이트] 트러블슈팅: 다중 테이블 동기화 및 담당자 관리
+
+## 문제 상황
+프로젝트 업데이트 시 PROJ, PROJ_DEPT, PROJ_SCHE, PROJ_EMPL 4개 테이블이 연동되어야 하는데,
+중간에 하나라도 실패하면 데이터 불일치가 발생하는 문제가 있었습니다.
+
+## 원인 분석
+- 트랜잭션 처리 없이 각 테이블을 순서대로 update하는 구조였기 때문에, 중간 실패 시 일부만 반영된 상태로 남음
+- PROJ_EMPL(담당자) 테이블은 조회 후 insert/update를 선택해야 하는 분기 로직이 필요했는데 초기에는 누락되어 있었음
+
+## 해결 과정
+- @Transactional 어노테이션 적용으로 4개 테이블 update를 하나의 원자적 작업으로 묶음
+- selectProjEmplVoByNo로 담당자 존재 여부를 먼저 확인 후, null이면 insert·아니면 update하는 분기 로직 추가
+- 각 update 메서드에 result != 1 시 IllegalArgumentException을 던지는 방어 로직 추가
+
+## 결과
+- 4개 테이블 동기화 완전 보장
+- 담당자 중복 insert 방지`,
+  },
+  "Task-Flow::마일스톤 상세조회.sql": {
+    회고: `# [마일스톤 상세조회] 파일 회고
+
+## 좋았던 점
+- INNER JOIN과 LEFT JOIN을 의도에 맞게 혼용하여, 필수 데이터(작성자)는 누락 없이, 선택 데이터(팔로워)는 null 허용으로 처리한 설계가 명확했습니다.
+- DISTINCT를 사용해 다중 JOIN으로 인한 데이터 중복 가능성을 차단한 점이 좋았습니다.
+
+## 아쉬운 점
+- MyBatis 어노테이션에 멀티라인 SQL을 직접 작성하다 보니 가독성이 떨어지는 면이 있었습니다. XML 매퍼로 분리했으면 더 관리하기 좋았을 것입니다.
+
+## 시도해볼 만한 점
+- 향후에는 쿼리 실행 계획(EXPLAIN)을 반드시 분석하여 인덱스 누락 여부를 사전에 확인하겠습니다.`,
+    트러블슈팅: `# [마일스톤 상세조회] 트러블슈팅: 권한 로직 개선 및 쿼리 성능 최적화
+
+## 문제 상황
+- '마일스톤은 담당자만 열람 가능', '체크리스트는 누구나 열람 가능'이라는 상이한 권한 정책이 혼재하여 쿼리가 복잡해졌습니다.
+- 체크리스트 조회 시 권한 확인을 위한 불필요한 JOIN 연산이 매번 발생했습니다.
+- N+1 문제 발생 위험이 높고 쿼리 복잡도가 증가했습니다.
+
+## 해결 과정
+- 팀원들과 기술 협의를 통해 '권한의 일관성'을 우선순위로 설정하고 정책을 재정립했습니다.
+- 유저가 생성할 수 있는 데이터 범위를 프로젝트 및 부서 단위로 명확하게 제한했습니다.
+- 권한 체크를 위해 복잡하게 얽혀있던 테이블 관계를 단순화하고, INNER JOIN 기반의 명확한 구조로 재설계했습니다.
+
+## 결과
+- 권한 JOIN 구조 단순화로 응답 속도 향상
+- 일관된 권한 정책으로 보안성 강화
+- N+1 위험 요소 제거로 유지보수 편의성 증대`,
+  },
+  "Trip-Tracks::메인피드조회페이지.js": {
+    회고: `# [메인피드조회페이지] 파일 회고
+
+## 좋았던 점
+- 서브쿼리를 활용한 좋아요 수 집계와 현재 유저의 좋아요 여부를 단일 쿼리로 처리하여 DB 왕복 횟수를 최소화한 점이 좋았습니다.
+- 게시물 노출 시마다 Ambass_Info_Log, Post_Log에 실시간 로그를 기록하는 구조로 통계 데이터 정확성을 높였습니다.
+
+## 아쉬운 점
+- for문 내에서 conn.query를 반복 호출하는 구조라 N+1 문제가 발생합니다. 게시물 수(최대 20개)가 많아질 경우 성능 이슈가 생길 수 있습니다.
+- 이미지 경로를 하드코딩된 서버 URL로 조합하는 방식이라 환경 변수로 분리했으면 더 좋았을 것입니다.
+
+## 시도해볼 만한 점
+- 로그 기록은 비동기 메시지 큐(예: Redis pub/sub)를 통해 메인 조회 로직과 분리하면 응답 속도를 더 개선할 수 있을 것 같습니다.`,
+    트러블슈팅: `# [메인피드조회페이지] 트러블슈팅: 다중 JOIN 데이터 중복 및 로그 기록
+
+## 문제 상황
+- Post, Post_Image, User_Info, Post_Like, Ambass_Save 등 다중 테이블 JOIN 시 이미지가 여러 장인 게시물에서 데이터 중복이 발생했습니다.
+- 게시물 노출 시 로그를 기록하는 로직이 없어 사용자 통계 데이터를 수집할 수 없었습니다.
+
+## 원인 분석
+- Post_Image 테이블에 게시물당 이미지가 여러 건 존재하기 때문에, 단순 JOIN 시 Post 데이터가 이미지 수만큼 중복 반환됨
+- 로그 테이블(Post_Log, Ambass_Info_Log)이 존재하지만 삽입 로직이 API에 포함되어 있지 않았음
+
+## 해결 과정
+- MIN(Post_Image.Image_Src)으로 대표 이미지 1장만 선택 + GROUP BY Post.Post_ID로 중복 제거
+- for문 내에서 INSERT ... ON DUPLICATE KEY UPDATE 패턴으로 로그를 upsert 처리
+
+## 결과
+- 게시물 중복 없이 최신순 20개 정확히 반환
+- 노출 통계 데이터 정상 수집 가능`,
+  },
+  "Trip-Tracks::엠버서더_대시보드.js": {
+    회고: `# [엠버서더 대시보드] 파일 회고
+
+## 좋았던 점
+- 권한 검증(User_Rule)을 API 진입 시점에 바로 처리하여 불필요한 DB 조회를 방지하는 구조가 좋았습니다.
+- 본문, 이미지, 댓글, 좋아요, 로그 등 파편화된 데이터를 서버에서 하나의 객체로 병합하여 프론트엔드가 단순하게 사용할 수 있도록 설계했습니다.
+
+## 아쉬운 점
+- 쿼리를 5번 순차 실행하는 구조라 응답 시간이 누적됩니다. Promise.all을 활용한 병렬 처리로 개선 여지가 큽니다.
+- conn.end()를 finally에서 처리하고 있지만, 커넥션 풀 반환이 보장되는지 추가 검증이 필요했습니다.
+
+## 시도해볼 만한 점
+- 쿼리들을 Promise.all로 병렬화하면 응답 시간을 크게 단축할 수 있을 것입니다.`,
+    트러블슈팅: `# [엠버서더 대시보드] 트러블슈팅: 권한 관리 및 복합 데이터 조합
+
+## 문제 상황
+- 엠버서더 전용 기능임에도 불구하고 권한 검증 없이 API가 열려있어 일반 유저도 접근 가능한 보안 취약점이 있었습니다.
+- 게시물 관련 데이터(이미지·댓글·좋아요·로그)가 각기 다른 테이블에 분산되어 있어 한 번에 조회하기 어려웠습니다.
+
+## 원인 분석
+- Node.js Express 라우터에 미들웨어나 권한 체크 로직이 없었음
+- 단일 복합 쿼리로 모든 데이터를 JOIN 시 성능 저하 및 데이터 처리 복잡도가 너무 높아짐
+
+## 해결 과정
+- 세션에서 User_ID를 꺼내 User_Rule = 1 (엠버서더)인지 확인하는 권한 검증 로직을 라우터 최상단에 추가
+- 데이터를 목적별로 분리된 쿼리로 개별 조회 후 서버에서 객체 병합하는 전략 채택
+
+## 결과
+- 엠버서더 권한 없는 유저의 접근 차단
+- 복합 데이터를 안정적으로 조합하여 단일 응답으로 반환`,
   },
 };
 
-// ─── 프로젝트 데이터 (회고/트러블슈팅 파일 제거) ────────────────────────────
+// ─── 프로젝트 데이터 ──────────────────────────────────────────────────────────
 const projects = [
   {
     title: "Sloway",
@@ -207,18 +289,27 @@ const projects = [
       {
         name: "통계 알고리즘.sql",
         type: "SQL",
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_mainPage.png",
+        desc: `유닛의 예약, 리뷰 정보를 통계알고리즘을 통해 랭킹을 만들어 제공합니다.
+이를 통해 사용자는 부여된 점수에 기반하여 높은 점수를 가진 공간들만 추천받을 수 있습니다.
+
+공간이 추천되는 알고리즘 입니다.
+
+        첫번째 컴포넌트 알고리즘 : (총 예약건수 * 0.7 + (리뷰의 평균)*0.3)+(7일이내 신규 유닛의 경우: 0.5) *100
+        두번째 컴포넌트 알고리즘 : (공간에 속한 유닛들의 총 예약건수 * 0.7 + (공간에 속한 유닛들의 리뷰의 평균)*0.3)+(7일이내 신규 공간의 경우: 0.5) *100
+        세번째 컴포넌트 알고리즘 : (워크앤스테이라는 타입의 유닛의 총 예약건수 * 0.7 + (워크앤스테이라는 타입의 유닛의 리뷰의 평균)*0.3)+(7일이내 신규 워크앤스테이의 경우: 0.5) *100
+        
+통계 데이터를 실시간으로 조회를 진행했을 시 최저 24.3초 최대 32.1초 평균값 28.3초가 소요되는 점을 발견했습니다.
+init용 인덱스를 통한 튜닝 진행하여 최저 8.2초 최대 16.8초 평균 12.4초까지 속도를 개선했으나, 사용자가 사용하기에 모자라다고 판단하여 캐싱을 진행했습니다.
+materialized view를 활용하여 스케줄러를 통해 10분에 한 번씩 값이 반영되도록 설계했습니다. 조회 속도가 최저 0.24초 최대 0.48초 평균 0.38초까지 개선되었습니다.█`,
         code: `-- 기존에 테이블이 있다면 삭제
 DROP TABLE IF EXISTS place_summary;
--- 기존에 존재하는 Materialized view 삭제
 DROP MATERIALIZED VIEW IF EXISTS place_summary;
 
--- Materialized View 생성
 CREATE MATERIALIZED VIEW place_summary AS
 WITH
 RsvnStats AS (
-    SELECT
-        p.no as place_no,
-        p.type,
+    SELECT p.no as place_no, p.type,
         COUNT(DISTINCT r.no) AS rsvn_cnt,
         AVG(rev.score_total) AS avg_score
     FROM place p
@@ -243,8 +334,7 @@ AmenityInfo AS (
     GROUP BY wa.work_no
 )
 SELECT
-    p.no as place_no,
-    p.type,
+    p.no as place_no, p.type,
     MAX(CASE WHEN p.type = 'STATION' THEN s.no WHEN p.type = 'OFFICE' THEN o.no ELSE w.no END) as target_no,
     MAX(p.title || ' ' || COALESCE(s.title, o.title, w.title)) as title,
     MAX(p.address) as address,
@@ -257,37 +347,33 @@ SELECT
     MAX(p.status) as status,
     NOW() as updated_at
 FROM place p
-         LEFT JOIN station s ON p.type = 'STATION' AND s.place_no = p.no
-         LEFT JOIN office o ON p.type = 'OFFICE' AND o.place_no = p.no
-         LEFT JOIN work_stay w ON p.type = 'WORK_STAY' AND w.place_no = p.no
-         LEFT JOIN RsvnStats rs ON rs.place_no = p.no AND rs.type = p.type
-         LEFT JOIN ImgInfo i ON i.place_no = p.no
-         LEFT JOIN AmenityInfo am ON am.work_no = w.no
+LEFT JOIN station s ON p.type = 'STATION' AND s.place_no = p.no
+LEFT JOIN office o ON p.type = 'OFFICE' AND o.place_no = p.no
+LEFT JOIN work_stay w ON p.type = 'WORK_STAY' AND w.place_no = p.no
+LEFT JOIN RsvnStats rs ON rs.place_no = p.no AND rs.type = p.type
+LEFT JOIN ImgInfo i ON i.place_no = p.no
+LEFT JOIN AmenityInfo am ON am.work_no = w.no
 WHERE p.status = 'I'
 GROUP BY p.no, p.type;
 
--- REFRESH CONCURRENTLY를 위한 인덱스 생성
 CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`,
-        desc: `유닛의 예약, 리뷰 정보를 통계알고리즘을 통해 랭킹을 만들어 제공합니다.\n
-통계 데이터를 실시간으로 조회를 진행했을 시 최저 24.3초 최대 32.1초 평균값 28.3초가 소요되는 점을 발견했습니다.
-인덱스를 통한 튜닝 진행하여 최저 8.2초 최대 16.8초 평균 12.4초까지 속도를 개선했으나 사용자가 사용하기에 모자라다고 판단하여 캐싱을 진행했습니다.
-데이터베이스의 통계 조회용 테이블을 생성하여 진행하기보다는 통계값을 디스크에 직접 저장하여 조회속도가 더 빠른 materialized view를 활용하여 진행했습니다.
-스케쥴러를 통해 10분에 한번씩 값이 반영되도록 설계했습니다. 실시간성을 잃지만 조회 속도가 최저 0.24초 최대 0.48초 평균 0.38초까지 개선되었습니다.
-
-알고리즘:
-첫번째 컴포넌트: (총 예약건수 * 0.7 + 리뷰의 평균 * 0.3) + (7일이내 신규 유닛: 0.5) * 100
-두번째 컴포넌트: (공간에 속한 유닛들의 총 예약건수 * 0.7 + 리뷰의 평균 * 0.3) + (7일이내 신규 공간: 0.5) * 100
-세번째 컴포넌트: (워크앤스테이 유닛의 총 예약건수 * 0.7 + 리뷰의 평균 * 0.3) + (7일이내 신규: 0.5) * 100`,
-        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_mainPage.png",
       },
       {
         name: "워크앤스테이 상세.java",
         type: "java",
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_workStayDetailPage.png",
+        desc: `워크앤스테이 상세조회 화면입니다.
+
+다중 Join이 발생하는 테이블 구조를 알고리즘을 위해 설계된 place_summary (Materialized View)를 조회하는 방식으로 구조화하여 조회 성능을 대폭 향상했습니다.
+또한, 쿼리 플랜 분석을 바탕으로 인덱스를 전략적으로 배치하여 데이터 조회 속도를 최적화했습니다.
+
+유닛의 상태(검수/운영) 필드를 도입하여 데이터 생명주기를 관리합니다.
+검수 대기 상태에서는 수정 버튼을 조건부 렌더링하여 관리자의 승인 전 수정 시도를 방지했습니다.█`,
         code: `@Override
 public StationDetailRespDto selectWorkStayDetailDashBoard(Long no, Long memberNo) {
     Tuple tuple = fetchWorkStayBasicInfo(no, memberNo);
     if (tuple == null) {
-        throw new IllegalArgumentException("해당 워케이션 정보를 찾을 수 없거나 권한이 없습니다. id=" + no);
+        throw new IllegalArgumentException("해당 워케이션 정보를 찾을 수 없습니다. id=" + no);
     }
     StationDetailRespDto.SummaryCard summary = fetchSummaryCard(no);
     StationDetailRespDto.HeaderInfo headerInfo = buildWorkStayHeaderInfo(tuple, summary);
@@ -295,12 +381,9 @@ public StationDetailRespDto selectWorkStayDetailDashBoard(Long no, Long memberNo
     List<String> facilities = fetchFacilities(no);
     List<StationDetailRespDto.RecentBooking> recentBookings = fetchRecentBookings(no);
     return StationDetailRespDto.builder()
-            .header(headerInfo)
-            .basicInfo(basicInfo)
-            .summary(summary)
-            .facilities(facilities)
-            .recentBookings(recentBookings)
-            .build();
+            .header(headerInfo).basicInfo(basicInfo)
+            .summary(summary).facilities(facilities)
+            .recentBookings(recentBookings).build();
 }
 
 private Tuple fetchWorkStayBasicInfo(Long workStayId, Long memberNo) {
@@ -308,45 +391,54 @@ private Tuple fetchWorkStayBasicInfo(Long workStayId, Long memberNo) {
             .select(hostPlaceEntity.no.max())
             .from(hostPlaceEntity)
             .where(hostPlaceEntity.workStayEntity.no.eq(workStayId));
-
     return queryFactory
-            .select(
-                    workStayEntity.title,
-                    placeEntity.title,
-                    placeEntity.type,
-                    hostPlaceEntity.status,
-                    placeEntity.address,
-                    workStayEntity.maxCnt,
-                    workStayEntity.cnt,
-                    workStayEntity.monPrice,
-                    workStayEntity.holPrice,
-                    workStayEntity.checkinTime,
-                    workStayEntity.checkoutTime,
-                    imgWorkStayEntity.currentUrl
-            )
+            .select(workStayEntity.title, placeEntity.title, placeEntity.type,
+                    hostPlaceEntity.status, placeEntity.address,
+                    workStayEntity.maxCnt, workStayEntity.cnt,
+                    workStayEntity.monPrice, workStayEntity.holPrice,
+                    workStayEntity.checkinTime, workStayEntity.checkoutTime,
+                    imgWorkStayEntity.currentUrl)
             .from(workStayEntity)
             .join(placeEntity).on(placeEntity.no.eq(workStayEntity.placeEntity.no))
-            .leftJoin(imgWorkStayEntity).on(imgWorkStayEntity.workStayEntity.no.eq(workStayId).and(imgWorkStayEntity.sort.eq(1)))
+            .leftJoin(imgWorkStayEntity).on(imgWorkStayEntity.workStayEntity.no.eq(workStayId)
+                    .and(imgWorkStayEntity.sort.eq(1)))
             .join(hostPlaceEntity).on(hostPlaceEntity.workStayEntity.no.eq(workStayEntity.no))
             .join(hostPlaceEntity.hostEntity, hostEntity)
-            .where(
-                    workStayEntity.no.eq(workStayId),
-                    hostEntity.memberNo.eq(memberNo),
-                    hostPlaceEntity.no.in(latestHostPlaceIdSubQuery)
-            )
+            .where(workStayEntity.no.eq(workStayId), hostEntity.memberNo.eq(memberNo),
+                    hostPlaceEntity.no.in(latestHostPlaceIdSubQuery))
             .fetchOne();
-}`,
-        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_workStayDetailPage.png",
-        desc: `워크앤스테이 상세조회 화면입니다.\n
-다중 Join이 발생하는 테이블 구조를 place_summary (Materialized View)로 구조화하여 조회 성능을 대폭 향상했습니다.
-또한, 쿼리 플랜 분석을 바탕으로 인덱스를 전략적으로 배치하여 데이터 조회 속도를 최적화했습니다.
+}
 
-유닛의 상태(검수/운영) 필드를 도입하여 데이터 생명주기를 관리합니다.
-특히, 검수 대기 상태에서는 수정 버튼을 조건부 렌더링하여 관리자의 승인 전 수정 시도를 방지하고 안정적인 운영을 유도했습니다.`,
+private StationDetailRespDto.SummaryCard fetchSummaryCard(Long workStayId) {
+    YearMonth currentMonth = YearMonth.now();
+    LocalDate startOfMonth = currentMonth.atDay(1);
+    LocalDate endOfMonth = currentMonth.atEndOfMonth();
+    Tuple bookingStats = queryFactory
+            .select(rsvnEntity.no.count(), rsvnEntity.amt.sum().coalesce(0))
+            .from(rsvnEntity)
+            .where(rsvnEntity.workStayNo.no.eq(workStayId),
+                    rsvnEntity.createdAt.between(startOfMonth.atStartOfDay(), endOfMonth.atTime(23,59,59)),
+                    rsvnEntity.status.in(RsvnStatus.S, RsvnStatus.E))
+            .fetchOne();
+    Tuple reviewStats = queryFactory
+            .select(reviewEntity.no.count(), reviewEntity.scoreTotal.avg().coalesce(0.0))
+            .from(reviewEntity)
+            .where(reviewEntity.rsvnNo.workStayNo.no.eq(workStayId))
+            .fetchOne();
+    int monthlyBookings = bookingStats != null ? bookingStats.get(0, Number.class).intValue() : 0;
+    long monthlyRevenue = bookingStats != null ? bookingStats.get(1, Number.class).longValue() : 0L;
+    int totalReviews = reviewStats != null ? reviewStats.get(0, Number.class).intValue() : 0;
+    double averageRating = reviewStats != null ? Math.round(reviewStats.get(1, Double.class) * 10) / 10.0 : 0.0;
+    return StationDetailRespDto.SummaryCard.builder()
+            .monthlyBookings(monthlyBookings).monthlyRevenue(monthlyRevenue)
+            .totalReviews(totalReviews).averageRating(averageRating).build();
+}`,
       },
       {
         name: "검수상세 페이지.java",
         type: "java",
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_approvalDetailPage.png",
+        desc: `검수 상세 페이지입니다.\n\n클라우드 스토리지 활용: 유닛 이미지 데이터를 AWS S3 Bucket을 통해 관리하여 서버의 부하를 분산하고, 확장성 있는 미디어 처리 인프라를 구축했습니다.\n\n운영 품질 관리: 검수 과정에서 사진 체크리스트 검증 로직을 강제하여, 호스트가 등록한 공간의 정보가 운영 기준을 충족했는지 체계적으로 확인하도록 설계했습니다.\n\n운영 무결성 확보: 모든 체크리스트 항목이 승인 조건에 부합해야만 검수 완료가 가능하도록 구현했습니다.`,
         code: `@Override
 public ApprovalDetailRespDto findWorkStayDetail(Long no) {
     var latestPendingHostPlaceIdSubQuery = JPAExpressions
@@ -357,19 +449,12 @@ public ApprovalDetailRespDto findWorkStayDetail(Long no) {
 
     ApprovalDetailRespDto dto = queryFactory
             .select(Projections.constructor(ApprovalDetailRespDto.class,
-                    hostPlaceEntity.no,
-                    placeEntity.no,
-                    placeEntity.type,
-                    workStayEntity.title,
-                    workStayEntity.content,
-                    placeEntity.address,
-                    memberEntity.name,
-                    workStayEntity.monPrice,
-                    workStayEntity.cnt,
-                    workStayEntity.maxCnt,
-                    workStayEntity.checkinTime,
-                    workStayEntity.checkoutTime
-            ))
+                    hostPlaceEntity.no, placeEntity.no, placeEntity.type,
+                    workStayEntity.title, workStayEntity.content,
+                    placeEntity.address, memberEntity.name,
+                    workStayEntity.monPrice, workStayEntity.cnt,
+                    workStayEntity.maxCnt, workStayEntity.checkinTime,
+                    workStayEntity.checkoutTime))
             .from(workStayEntity)
             .join(workStayEntity.placeEntity, placeEntity)
             .join(hostPlaceEntity).on(hostPlaceEntity.no.in(latestPendingHostPlaceIdSubQuery))
@@ -385,16 +470,18 @@ public ApprovalDetailRespDto findWorkStayDetail(Long no) {
                 .from(imgWorkStayEntity)
                 .where(imgWorkStayEntity.workStayEntity.no.eq(no))
                 .fetch());
+
+        List<ApprovalDetailRespDto.AmenityDto> mainAmenities = queryFactory
+                .select(Projections.constructor(ApprovalDetailRespDto.AmenityDto.class,
+                        workAmenityEntity.amenityEntity.no, workAmenityEntity.amenityEntity.name))
+                .from(workAmenityEntity)
+                .where(workAmenityEntity.workStayEntity.no.eq(no))
+                .fetch();
+
+        dto.setAmenities(mainAmenities);
     }
     return dto;
 }`,
-        desc: `검수 상세 페이지입니다.\n
-클라우드 스토리지 활용: 유닛 이미지 데이터를 AWS S3 Bucket을 통해 관리하여 서버의 부하를 분산하고, 확장성 있는 미디어 처리 인프라를 구축했습니다.
-
-운영 품질 관리: 검수 과정에서 사진 체크리스트 검증 로직을 강제하여, 호스트가 등록한 공간의 정보가 운영 기준을 충족했는지 체계적으로 확인하도록 설계했습니다.
-
-운영 무결성 확보: 모든 체크리스트 항목이 승인 조건에 부합해야만 검수 완료가 가능하도록 로직을 구현하여, 운영 데이터의 품질을 일관되게 유지합니다.`,
-        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_approvalDetailPage.png",
       },
     ],
   },
@@ -418,6 +505,14 @@ public ApprovalDetailRespDto findWorkStayDetail(Long no) {
       {
         name: "프로젝트 업데이트.java",
         type: "java",
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MainPage.png",
+        desc: `프로젝트를 업데이트하기 위한 페이지입니다.
+
+프로젝트 고유번호인 no값을 통한 조회로 유효성을 체크한 후, Project테이블의 정보들을 수정하고, 담당하는 부서를 변경합니다.
+프로젝트 일정도 삭제 후 재삽입 방식으로 갱신하며, 담당자를 지정하기 위해 다대다 관계의 중계테이블을 참조하여 담당자 정보를 체크하여 수정합니다.
+
+프로젝트의 상태값은 드래그 앤 드롭 기능을 통해 실시간으로 반영되도록 구현했습니다.
+즐겨찾기 기능 또한 프로젝트 카드의 별 아이콘을 통해 실시간으로 반영되도록 구현했습니다.`,
         code: `@Transactional
 public int update(ProjVo projVo, ProjEmplVo projEmplVo, ProjDeptVo projDeptVo, ProjScheVo projScheVo) {
     String projNo = String.valueOf(projVo.getNo());
@@ -425,10 +520,8 @@ public int update(ProjVo projVo, ProjEmplVo projEmplVo, ProjDeptVo projDeptVo, P
     updateProj(projVo);
     updateProjDept(projDeptVo, projNo);
     updateProjSche(projScheVo, projNo);
-
     projEmplVo.setProjNo(projNo);
     ProjEmplVo checkManagerY = projMapper.selectProjEmplVoByNo(projNo);
-
     if (checkManagerY == null) {
         insertNewManager(projEmplVo);
     } else {
@@ -442,68 +535,46 @@ private int updateProj(ProjVo projVo) {
     if (result != 1) throw new IllegalArgumentException("[PROJ-301] Project UPDATE Error");
     return result;
 }
-
 private int updateProjDept(ProjDeptVo projDeptVo, String projNo) {
     projDeptVo.setProjNo(projNo);
     int result = projMapper.updateProjDept(projDeptVo);
     if (result != 1) throw new IllegalArgumentException("[PROJ-302] Project_DEPT UPDATE Error");
     return result;
 }
-
 private int updateProjSche(ProjScheVo projScheVo, String projNo) {
     int result = projMapper.updateProjSche(projScheVo, projNo);
     if (result != 1) throw new IllegalArgumentException("[PROJ-303] Project_SCHE UPDATE Error");
     return result;
 }
-
 private int insertNewManager(ProjEmplVo projEmplVo) {
     int result = projMapper.insertProjEmpl(projEmplVo);
     if (result < 1) throw new IllegalArgumentException("[PROJ-306] Project_EMPL INSERT Error");
     return result;
 }`,
-        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MainPage.png",
-        desc: `프로젝트를 업데이트하기 위한 페이지입니다.
-프로젝트 고유번호인 no값을 통한 조회로 유효성을 체크한 후, Project테이블의 정보들을 수정하고, 담당하는 부서를 변경합니다.
-프로젝트 일정도 삭제 후 재삽입 방식으로 갱신하며, 담당자를 지정하기위해 다대다 관계의 중계테이블을 참조하여 담당자 정보를 체크하여 수정합니다.`,
       },
       {
         name: "마일스톤 상세조회.sql",
         type: "sql",
-        code: `SELECT DISTINCT
-    M.NO
-    ,M.SCHE_NO       AS scheno
-    ,M.TITLE
-    ,M.CONTENT
-    ,M.LABEL
-    ,M.STATE
-    ,M.START_DATE    AS startDate
-    ,M.END_DATE      AS endDate
-    ,M.FOLLOWER_NO   AS followerNo
-    ,EM.NAME         AS followerName
-    ,PEME.NO         AS mileEmplNo
-    ,PEME.NAME       AS mileEmplName
-    ,PEPE.NO         AS projEmplNo   
-    ,PEPE.NAME       AS projEmplName
-FROM MILE M
-    LEFT JOIN EMPL EM
-        ON EM.NO = M.FOLLOWER_NO
-    INNER JOIN PROJ_EMPL PEM
-        ON PEM.MILE_NO = M.NO
-        AND PEM.IS_WRITER_YN = 'Y'
-            INNER JOIN EMPL PEME
-                ON PEME.NO = PEM.EMPL_NO
-    LEFT JOIN PROJ_EMPL PEP
-        ON PEP.PROJ_NO = #{projNo}
-        AND PEP.IS_MANAGER_YN = 'Y'
-            INNER JOIN EMPL PEPE
-                ON PEPE.NO = PEP.EMPL_NO
-WHERE M.DEL_AT IS NULL
-    AND M.NO = #{no}`,
-        desc: `마일스톤 상세 조회를 위한 핵심 쿼리입니다.
-마일스톤과 담당 부서, 프로젝트 간의 데이터 무결성을 보장하기 위해 핵심 식별자 기반의 INNER JOIN 구조를 명확히 설계했습니다.
-담당자 정보 누락 없이 정확한 비즈니스 데이터를 결합하는 것을 최우선으로 고려했으며,
-불필요한 Full Scan을 방지하고 조인 연산의 효율성을 극대화하기 위해 인덱스를 고려한 결합 조건을 적용했습니다.`,
         img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/TaskFlow_MileStonePage.png",
+        desc: `마일스톤 상세 조회를 위한 페이지입니다.
+
+마일스톤과 담당 부서, 프로젝트 간의 데이터 무결성을 보장하기 위해 핵심 식별자 기반의 INNER JOIN 구조를 명확히 설계했습니다.
+특히 프로젝트와 마일스톤 간 담당자 정보의 참조 관계가 모호할 수 있는 점을 고려해 조인 조건을 더욱 견고하게 최적화했으며, 성능을 위해 인덱스를 활용한 결합 조건을 적용했습니다.
+
+마일스톤의 상태값도 프로젝트와 마찬가지로 드래그 앤 드롭 기능을 통해 실시간으로 반영되도록 구현했습니다.`,
+        code: `SELECT DISTINCT
+    M.NO, M.SCHE_NO AS scheno, M.TITLE, M.CONTENT, M.LABEL, M.STATE,
+    M.START_DATE AS startDate, M.END_DATE AS endDate,
+    M.FOLLOWER_NO AS followerNo, EM.NAME AS followerName,
+    PEME.NO AS mileEmplNo, PEME.NAME AS mileEmplName,
+    PEPE.NO AS projEmplNo, PEPE.NAME AS projEmplName
+FROM MILE M
+    LEFT JOIN EMPL EM ON EM.NO = M.FOLLOWER_NO
+    INNER JOIN PROJ_EMPL PEM ON PEM.MILE_NO = M.NO AND PEM.IS_WRITER_YN = 'Y'
+        INNER JOIN EMPL PEME ON PEME.NO = PEM.EMPL_NO
+    LEFT JOIN PROJ_EMPL PEP ON PEP.PROJ_NO = #{projNo} AND PEP.IS_MANAGER_YN = 'Y'
+        INNER JOIN EMPL PEPE ON PEPE.NO = PEP.EMPL_NO
+WHERE M.DEL_AT IS NULL AND M.NO = #{no}`,
       },
     ],
   },
@@ -528,90 +599,52 @@ WHERE M.DEL_AT IS NULL
     files: [
       {
         name: "메인피드조회페이지.js",
-        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/Trip_Tracks_MainPage.jpg",
         type: "js",
-        code: `var express = require("express");
-var router = express.Router();
-const DBconn = require("../../utils/DBconn");
-
-router.post("/", async (req, res) => {
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/Trip_Tracks_MainPage.jpg",
+        desc: `메인 홈페이지입니다.\n\n사용자의 관심사와 엠버서더 활동을 반영한 최신 게시물 20개를 조회하는 기능을 구현했습니다.\n다중 조인 시 발생할 수 있는 데이터 중복과 성능 저하를 방지하기 위해, 서브쿼리를 활용한 필터링과 GROUP BY를 전략적으로 배치하여 데이터의 무결성을 확보했습니다.\n또한, 게시물 노출 시마다 실시간 로그를 기록하는 트랜잭션 구조를 설계하여 사용자 통계 데이터의 정확성을 높였습니다.`,
+        code: `router.post("/", async (req, res) => {
   const { User_ID } = req.session;
   let conn;
   try {
     conn = await DBconn.getConnection();
     const selectAmbassPostsQuery = \`
-      SELECT 
-        CAST(Post.Post_ID AS CHAR) AS Post_ID, 
-        Post.Post_Title, 
-        Post.Post_Caption, 
-        MIN(Post_Image.Image_Src) AS Image_Src,
-        CAST(Post.User_ID AS CHAR) AS User_ID, 
-        User_Info.Profile_Img, 
-        User_Info.User_Rule,
-        IFNULL(CAST(Post_Like.likeCount AS CHAR), '0') AS likeCount,
-        IF(Post_Like_User.User_ID IS NOT NULL, 1, 0) AS isLike
-      FROM Ambass_Save 
-      LEFT JOIN Post ON Ambass_Save.Post_ID = Post.Post_ID 
-      LEFT JOIN Post_Image ON Post.Post_ID = Post_Image.Post_ID 
+      SELECT CAST(Post.Post_ID AS CHAR) AS Post_ID, Post.Post_Title,
+             Post.Post_Caption, MIN(Post_Image.Image_Src) AS Image_Src,
+             CAST(Post.User_ID AS CHAR) AS User_ID,
+             User_Info.Profile_Img, User_Info.User_Rule,
+             IFNULL(CAST(Post_Like.likeCount AS CHAR), '0') AS likeCount,
+             IF(Post_Like_User.User_ID IS NOT NULL, 1, 0) AS isLike
+      FROM Ambass_Save
+      LEFT JOIN Post ON Ambass_Save.Post_ID = Post.Post_ID
+      LEFT JOIN Post_Image ON Post.Post_ID = Post_Image.Post_ID
       LEFT JOIN User_Info ON Post.User_ID = User_Info.User_ID
-      LEFT JOIN (
-        SELECT Post_ID, COUNT(*) AS likeCount 
-        FROM Post_Like 
-        GROUP BY Post_ID
-      ) AS Post_Like ON Post.Post_ID = Post_Like.Post_ID
-      LEFT JOIN (
-        SELECT Post_ID, User_ID
-        FROM Post_Like
-        WHERE User_ID = ?
-      ) AS Post_Like_User ON Post.Post_ID = Post_Like_User.Post_ID
-      WHERE Ambass_Save.User_ID = ?
-      AND User_Info.User_Rule = 1
+      LEFT JOIN (SELECT Post_ID, COUNT(*) AS likeCount FROM Post_Like GROUP BY Post_ID) AS Post_Like
+             ON Post.Post_ID = Post_Like.Post_ID
+      LEFT JOIN (SELECT Post_ID, User_ID FROM Post_Like WHERE User_ID = ?) AS Post_Like_User
+             ON Post.Post_ID = Post_Like_User.Post_ID
+      WHERE Ambass_Save.User_ID = ? AND User_Info.User_Rule = 1
       GROUP BY Post.Post_ID
-      ORDER BY Post.Post_ID DESC 
-      LIMIT 20
+      ORDER BY Post.Post_ID DESC LIMIT 20
     \`;
     const posts = await conn.query(selectAmbassPostsQuery, [User_ID, User_ID]);
-
     for (let item of posts) {
       item.Profile_Img = "http://triptracks.co.kr/imgserver/" + item.Profile_Img;
       item.Image_Src = "http://triptracks.co.kr/imgserver/" + item.Image_Src;
-      await conn.query(
-        \`INSERT INTO Ambass_Info_Log (User_ID, Year, Month) 
-        VALUES (?, YEAR(NOW()), MONTH(NOW())) 
-        ON DUPLICATE KEY UPDATE View = View + 1;\`,
-        [item.User_ID]
-      );
-      await conn.query(
-        \`INSERT INTO Post_Log (Post_ID, Log_Date, User_ID, View)
-        VALUES (?, CURDATE(), ?, 1)
-        ON DUPLICATE KEY UPDATE View = View + 1;\`,
-        [item.Post_ID, item.User_ID]
-      );
     }
     return res.status(200).json(posts);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "내부 서버 오류가 발생했습니다." });
+    return res.status(500).json({ error: "내부 서버 오류" });
   } finally {
     if (conn) conn.end();
   }
-});
-
-module.exports = router;`,
-        desc: `메인 홈페이지입니다.
-사용자의 관심사와 엠버서더 활동을 반영한 최신 게시물 20개를 조회하는 기능을 구현했습니다.
-다중 조인 시 발생할 수 있는 데이터 중복과 성능 저하를 방지하기 위해, 서브쿼리를 활용한 필터링과 GROUP BY를 전략적으로 배치하여 데이터의 무결성을 확보했습니다.
-또한, 게시물 노출 시마다 실시간 로그를 기록하는 트랜잭션 구조를 설계하여 사용자 통계 데이터의 정확성을 높였습니다.`,
+});`,
       },
       {
         name: "엠버서더_대시보드.js",
-        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/Trip_Tracks_dash.jpg",
         type: "js",
-        code: `var express = require("express");
-var router = express.Router();
-const pool = require("../../utils/DBconn");
-
-router.use("/", async (req, res, next) => {
+        img: "https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/Trip_Tracks_dash.jpg",
+        desc: `엠버서더 권한을 가진 유저의 게시글 대시보드 화면입니다.\n\n게시물 상세 페이지에 필요한 방대한 데이터(본문, 이미지, 댓글, 좋아요, 로그)를 조회하는 API를 구현했습니다.\n단일 쿼리로 해결할 수 없는 파편화된 데이터들을 논리적으로 그룹화하여 서버 단에서 병합하는 로직을 구성했습니다.\n특히, 반복적인 DB 커넥션 호출에 따른 성능 저하를 방지하기 위해 비동기 흐름을 정교하게 제어했습니다.`,
+        code: `router.use("/", async (req, res, next) => {
   const { User_ID } = req.session;
   const { Post_ID } = req.body;
   if (!User_ID) return res.status(501).json({ success: false, msg: "로그인이 필요합니다." });
@@ -619,68 +652,38 @@ router.use("/", async (req, res, next) => {
   try {
     conn = await pool.getConnection();
     let [User_Info] = await conn.query("SELECT User_Rule FROM User_Info WHERE User_ID=?", [User_ID]);
-    if (!User_Info) return res.status(501).json({ success: false, msg: "사용자 정보를 찾을 수 없습니다." });
-    if (User_Info.User_Rule !== 1) return res.status(501).json({ success: false, msg: "권한이 없습니다." });
+    if (!User_Info) return res.status(501).json({ success: false, msg: "사용자 정보 없음" });
+    if (User_Info.User_Rule !== 1) return res.status(501).json({ success: false, msg: "권한 없음" });
 
-    let [post] = await conn.query(\`
-      SELECT P.Post_Caption, P.Post_Title, P.Post_Create_Timestamp, P.Post_Edit_Timestamp
-      FROM Post P WHERE P.Post_ID = ?
-    \`, [Post_ID]);
-
+    let [post] = await conn.query("SELECT P.Post_Caption, P.Post_Title FROM Post P WHERE P.Post_ID = ?", [Post_ID]);
     let images = await conn.query("SELECT PI.Image_Src FROM Post_Image PI WHERE PI.Post_ID = ?", [Post_ID]);
     let comments = await conn.query(\`
-      SELECT PC.User_ID AS Comment_User_ID, PC.Comment_Text, PC.Comment_Timestamp, UI.Profile_Img
+      SELECT PC.User_ID AS Comment_User_ID, PC.Comment_Text, UI.Profile_Img
       FROM Post_Comments PC LEFT JOIN User_Info UI ON PC.User_ID = UI.User_ID
-      WHERE PC.Post_ID = ?
-    \`, [Post_ID]);
+      WHERE PC.Post_ID = ?\`, [Post_ID]);
     let likes = await conn.query(\`
       SELECT PL.User_ID AS Like_User_ID, UI.Profile_Img
       FROM Post_Like PL LEFT JOIN User_Info UI ON PL.User_ID = UI.User_ID
-      WHERE PL.Post_ID = ?
-    \`, [Post_ID]);
-    let logs = await conn.query(\`
-      SELECT PLG.User_ID AS Log_User_ID, PLG.Log_Date, PLG.Feed_Like, PLG.View, PLG.Detail_View, PLG.Comment
-      FROM Post_Log PLG WHERE PLG.Post_ID = ?
-    \`, [Post_ID]);
+      WHERE PL.Post_ID = ?\`, [Post_ID]);
 
+    const BASE = "http://triptracks.co.kr/imgserver/";
     const post_info = {
       ...post,
-      Images: images.map(i => "http://triptracks.co.kr/imgserver/" + i.Image_Src),
+      Images: images.map(i => BASE + i.Image_Src),
       Comments: comments.map(c => ({
         User_ID: c.Comment_User_ID,
-        Profile_Img: "http://triptracks.co.kr/imgserver/" + c.Profile_Img,
+        Profile_Img: BASE + c.Profile_Img,
         Comment: c.Comment_Text,
-        Timestamp: c.Comment_Timestamp,
       })),
-      Likes: likes.map(l => ({
-        User_ID: l.Like_User_ID,
-        Profile_Img: "http://triptracks.co.kr/imgserver/" + l.Profile_Img,
-      })),
-      Logs: logs.map(log => ({
-        User_ID: log.Log_User_ID,
-        Date: log.Log_Date,
-        Feed_Like: log.Feed_Like,
-        View: log.View,
-        Detail_View: log.Detail_View,
-        Comment: log.Comment,
-      })),
+      Likes: likes.map(l => ({ User_ID: l.Like_User_ID, Profile_Img: BASE + l.Profile_Img })),
     };
-
     return res.status(200).json({ post_info });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "앰버서더 점수 설정 중 오류가 발생했습니다." });
+    res.status(500).json({ message: "오류 발생" });
   } finally {
     if (conn) conn.end();
   }
-});
-
-module.exports = router;`,
-        desc: `엠버서더 권한을 가진 유저의 본인의 게시글 대시보드 화면입니다.
-게시물 상세 페이지에 필요한 방대한 데이터(본문, 이미지, 댓글, 좋아요, 로그)를 조회하는 API를 구현했습니다.
-단일 쿼리로 해결할 수 없는 파편화된 데이터들을 논리적으로 그룹화하여 서버 단에서 병합하는 로직을 구성했습니다.
-특히, 반복적인 DB 커넥션 호출에 따른 성능 저하를 방지하기 위해 데이터베이스 트랜잭션 관리와 비동기 흐름을 정교하게 제어하여,
-복합적인 데이터를 안정적으로 프론트엔드로 전달할 수 있도록 설계했습니다.`,
+});`,
       },
     ],
   },
@@ -694,7 +697,7 @@ const techData = {
   ORM: "QueryDsl, JPA, MyBatis",
   DB: "Oracle, MS-SQL, MariaDB, MySQL, AWS RDS, PostgreSQL",
   "IDE/Tool":
-    "SQL Developer, IntelliJ, Eclipse, VSCode, Postman, pgAdmin, MySQL Workbench, Visual Studio, Team Foundation",
+    "SQL Developer, IntelliJ, Eclipse, VSCode, Postman, pgAdmin, MySQL Workbench, Visual Studio",
   Infrastructure: "AWS EC2, AWS S3, Tomcat, PM2",
   DevOps: "GitHub Actions, Docker, Azure Storage Explorer",
   Collaboration:
@@ -713,7 +716,7 @@ const getFileIcon = (name) => {
   return <VscFile style={{ color: "#cccccc", fontSize: "15px" }} />;
 };
 
-const getLangForHighlighter = (type) => {
+const getLang = (type) => {
   if (!type) return "javascript";
   const t = type.toLowerCase();
   if (t === "java") return "java";
@@ -722,53 +725,46 @@ const getLangForHighlighter = (type) => {
   return "javascript";
 };
 
+// ─── 메인 컴포넌트 ────────────────────────────────────────────────────────────
 export default function Portfolio() {
   const [viewMode, setViewMode] = useState(0);
-
-  // ── 탭 시스템 상태 ─────────────────────────────────────────────────────────
-  // openTabs: [{ projectTitle, file }]
   const [openTabs, setOpenTabs] = useState([
     { projectTitle: projects[0].title, file: projects[0].files[0] },
   ]);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
-
-  // ── 사이드바 폴더 열림/닫힘 ─────────────────────────────────────────────────
+  const [showImage, setShowImage] = useState(true);
+  const [showCode, setShowCode] = useState(true);
+  const [terminalTab, setTerminalTab] = useState("설명");
+  const [imgWidthPct, setImgWidthPct] = useState(50);
+  const [consoleHeight, setConsoleHeight] = useState(260);
   const [openPkgs, setOpenPkgs] = useState({
     Sloway: true,
     "Task-Flow": true,
     "Trip-Tracks": true,
   });
-
-  // ── 터미널 탭 ───────────────────────────────────────────────────────────────
-  // "설명" | "회고" | "트러블슈팅"
-  const [terminalTab, setTerminalTab] = useState("설명");
-
-  // ── 드래그 리사이즈 ─────────────────────────────────────────────────────────
-  // imgWidthPct: 이미지 패널이 전체 EditorArea에서 차지하는 % (0~100)
-  const [imgWidthPct, setImgWidthPct] = useState(50);
-  const isDragging = useRef(false);
-  const editorAreaRef = useRef(null);
-
-  // ── 타이핑 효과 (터미널 설명) ───────────────────────────────────────────────
+  const [expandedProject, setExpandedProject] = useState(null);
   const [typedDesc, setTypedDesc] = useState("");
 
-  // ── 두 번째 화면 목차 확장 ──────────────────────────────────────────────────
-  const [expandedProject, setExpandedProject] = useState(null);
+  const isDraggingEditor = useRef(false);
+  const isDraggingConsole = useRef(false);
+  const editorAreaRef = useRef(null);
+  const mainContainerRef = useRef(null);
 
-  // 현재 활성 탭 정보
   const activeTab = openTabs[activeTabIndex] ?? openTabs[0];
   const activeFile = activeTab?.file;
   const activeProject = activeTab?.projectTitle;
+  const terminalKey =
+    activeProject && activeFile ? `${activeProject}::${activeFile.name}` : null;
+  const fileTerminal = terminalKey
+    ? (fileTerminalData[terminalKey] ?? null)
+    : null;
 
-  // 터미널 콘텐츠 계산
   const getTerminalContent = () => {
     if (terminalTab === "설명") return activeFile?.desc || "설명이 없습니다.";
-    const data = terminalData[activeProject];
-    if (!data) return "해당 프로젝트의 데이터가 없습니다.";
-    return data[terminalTab] || "내용이 없습니다.";
+    if (!fileTerminal) return `이 파일에 대한 ${terminalTab} 내용이 없습니다.`;
+    return fileTerminal[terminalTab] || `내용이 없습니다.`;
   };
 
-  // 탭 열기 (이미 열려있으면 활성화만)
   const openTab = useCallback((projectTitle, file) => {
     setOpenTabs((prev) => {
       const idx = prev.findIndex(
@@ -783,13 +779,14 @@ export default function Portfolio() {
       return next;
     });
     setTerminalTab("설명");
+    setShowImage(true);
+    setShowCode(true);
   }, []);
 
-  // 탭 닫기
   const closeTab = useCallback((e, idx) => {
     e.stopPropagation();
     setOpenTabs((prev) => {
-      if (prev.length === 1) return prev; // 마지막 탭은 닫지 않음
+      if (prev.length === 1) return prev;
       const next = prev.filter((_, i) => i !== idx);
       setActiveTabIndex((cur) => {
         if (cur >= next.length) return next.length - 1;
@@ -800,41 +797,34 @@ export default function Portfolio() {
     });
   }, []);
 
-  // 타이핑 효과
   useEffect(() => {
     if (viewMode !== 2) return;
     setTypedDesc("");
     let i = 0;
-    const descText = getTerminalContent();
-    const charStep = 5;
+    const text = getTerminalContent();
     const id = setInterval(() => {
-      setTypedDesc(descText.slice(0, i));
-      i += charStep;
-      if (i > descText.length + charStep) {
-        setTypedDesc(descText);
+      setTypedDesc(text.slice(0, i));
+      i += 6;
+      if (i > text.length + 6) {
+        setTypedDesc(text);
         clearInterval(id);
       }
     }, 10);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFile, terminalTab, viewMode]);
-
-  // ── 드래그 리사이즈 핸들러 ───────────────────────────────────────────────────
-  const onDividerMouseDown = useCallback((e) => {
-    e.preventDefault();
-    isDragging.current = true;
-  }, []);
+  }, [activeFile, terminalTab, viewMode]); // eslint-disable-line
 
   useEffect(() => {
     const onMove = (e) => {
-      if (!isDragging.current || !editorAreaRef.current) return;
+      if (!isDraggingEditor.current || !editorAreaRef.current) return;
       const rect = editorAreaRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const pct = Math.min(Math.max((x / rect.width) * 100, 15), 85);
+      const pct = Math.min(
+        Math.max(((e.clientX - rect.left) / rect.width) * 100, 15),
+        85,
+      );
       setImgWidthPct(pct);
     };
     const onUp = () => {
-      isDragging.current = false;
+      isDraggingEditor.current = false;
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -844,12 +834,34 @@ export default function Portfolio() {
     };
   }, []);
 
-  // ── 화면 1: 인트로 ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!isDraggingConsole.current || !mainContainerRef.current) return;
+      const rect = mainContainerRef.current.getBoundingClientRect();
+      const fromBottom = rect.bottom - e.clientY;
+      setConsoleHeight(Math.min(Math.max(fromBottom, 80), rect.height * 0.7));
+    };
+    const onUp = () => {
+      isDraggingConsole.current = false;
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  const hasImage = !!activeFile?.img;
+  const showBoth = hasImage && showImage && showCode;
+  const showOnlyImg = hasImage && showImage && !showCode;
+  const showOnlyCode = !showImage || !hasImage;
+
   if (viewMode === 0) {
     return (
       <IntroScreen>
         <div className="content">
-          <h1 className="title">Hello, I'm a Developer.</h1>
+          <h1 className="title">Hello, I'm a Developer. Seo Hyeonjin</h1>
           <span className="highlight">안정적인 아키텍처 설계</span>와
           <span className="highlight"> 빠르고 쾌적한 서비스 환경</span>을
           끊임없이 고민하는 개발자입니다.
@@ -864,7 +876,6 @@ export default function Portfolio() {
     );
   }
 
-  // ── 화면 2: 프로필 + 목차 ───────────────────────────────────────────────────
   if (viewMode === 1) {
     return (
       <SplitScreen>
@@ -877,69 +888,86 @@ export default function Portfolio() {
             <p className="job-title">Backend / Full-Stack Developer</p>
           </div>
           <div className="info-container">
-            <div className="info-section">
-              <h2 className="section-title">이력</h2>
-              <div className="info-item">
-                <span className="date">2025.07 - 2025.09</span>
-                <div className="detail">
-                  <div className="title">소프트넷 (계약직)</div>
-                  <div className="desc">
-                    솔루션 사업부 기술연구소 연구원 / 요구사항에 따른 유지보수
-                    및 신규개발
+            {[
+              {
+                title: "이력",
+                items: [
+                  {
+                    date: "2025.07 - 2025.09",
+                    name: "소프트넷 (계약직)",
+                    desc: [
+                      "솔루션 사업부 기술연구소 연구원",
+                      "ERP, 병원MIS프로그램 개발",
+                    ],
+                  },
+                ],
+              },
+              {
+                title: "학력",
+                items: [
+                  {
+                    date: "2020.03 - 2025.02",
+                    name: "부천대학교",
+                    desc: ["컴퓨터 소프트웨어 학과"],
+                  },
+                ],
+              },
+              {
+                title: "자격증",
+                items: [
+                  {
+                    date: "2026.06",
+                    name: "정보처리산업기사(필기)",
+                    desc: ["한국산업인력공단"],
+                  },
+                  {
+                    date: "2025.08",
+                    name: "운전면허증(2종보통)",
+                    desc: ["서울경창청장"],
+                  },
+                ],
+              },
+              {
+                title: "교육 수료",
+                items: [
+                  {
+                    date: "2025.11 - 2026.06",
+                    name: "AWS 클라우드 기반 Devops 개발자 양성 과정",
+                    desc: ["KH정보교육원"],
+                  },
+                ],
+              },
+            ].map((sec) => (
+              <div className="info-section" key={sec.title}>
+                <h2 className="section-title">{sec.title}</h2>
+                {sec.items.map((item) => (
+                  <div className="info-item" key={item.name}>
+                    <span className="date">{item.date}</span>
+                    <div className="detail">
+                      <div className="title">{item.name}</div>
+                      {item.desc.map((d) => (
+                        <div className="desc" key={d}>
+                          {d}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="desc">ERP, 병원MIS프로그램 개발</div>
-                </div>
+                ))}
               </div>
-            </div>
-            <div className="info-section">
-              <h2 className="section-title">학력</h2>
-              <div className="info-item">
-                <span className="date">2020.03 - 2025.02</span>
-                <div className="detail">
-                  <div className="title">부천대학교</div>
-                  <div className="desc">컴퓨터 소프트웨어 학과</div>
-                </div>
-              </div>
-            </div>
-            <div className="info-section">
-              <h2 className="section-title">자격증</h2>
-              <div className="info-item">
-                <span className="date">2026.06</span>
-                <div className="detail">
-                  <div className="title">정보처리산업기사(필기)</div>
-                  <div className="desc">한국산업인력공단</div>
-                </div>
-              </div>
-            </div>
-            <div className="info-section">
-              <h2 className="section-title">교육 수료</h2>
-              <div className="info-item">
-                <span className="date">2025.11 - 2026.06</span>
-                <div className="detail">
-                  <div className="title">
-                    AWS 클라우드 기반 Devops 개발자 양성 과정
-                  </div>
-                  <div className="desc">KH정보교육원</div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
           <div className="info-section">
             <h2 className="section-title">기술 스택</h2>
-            <div className="info-item">
-              <div className="detail">
-                <TechTable>
-                  <tbody>
-                    {Object.entries(techData).map(([category, skills]) => (
-                      <tr key={category}>
-                        <th>{category}</th>
-                        <td>{skills}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </TechTable>
-              </div>
-            </div>
+            <TechTable>
+              <tbody>
+                {Object.entries(techData).map(([k, v]) => (
+                  <tr key={k}>
+                    <th>{k}</th>
+                    <td>{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </TechTable>
           </div>
         </LeftPanel>
 
@@ -966,24 +994,21 @@ export default function Portfolio() {
                           <p key={i}>• {line}</p>
                         ))}
                       </div>
-                      <div
-                        className="tech-stack-container"
-                        style={{ marginTop: "15px" }}
-                      >
+                      <div style={{ marginTop: "15px" }}>
                         <h4 style={{ color: "#569cd6", marginBottom: "8px" }}>
                           Tech Stack
                         </h4>
-                        {Object.entries(p.techStack).map(([key, value]) => (
+                        {Object.entries(p.techStack).map(([k, v]) => (
                           <div
-                            key={key}
+                            key={k}
                             style={{ fontSize: "0.85rem", marginBottom: "4px" }}
                           >
                             <span
                               style={{ fontWeight: "bold", color: "#ce9178" }}
                             >
-                              {key}:{" "}
+                              {k}:{" "}
                             </span>
-                            <span style={{ color: "#d4d4d4" }}>{value}</span>
+                            <span style={{ color: "#d4d4d4" }}>{v}</span>
                           </div>
                         ))}
                       </div>
@@ -1001,14 +1026,9 @@ export default function Portfolio() {
     );
   }
 
-  // ── 화면 3: VSCode 워크스페이스 ─────────────────────────────────────────────
-  const hasImage = !!activeFile?.img;
-
   return (
     <Layout>
       <GlobalStyle />
-
-      {/* 타이틀 바 */}
       <TitleBar>
         <div className="menus">
           <img
@@ -1046,30 +1066,28 @@ export default function Portfolio() {
       </TitleBar>
 
       <AppCore>
-        {/* 액티비티 바 */}
         <ActivityBar>
-          <div className="icon active" title="Explorer">
+          <div className="icon active">
             <VscFiles />
           </div>
-          <div className="icon" title="Search">
+          <div className="icon">
             <VscSearch />
           </div>
-          <div className="icon" title="Source Control">
+          <div className="icon">
             <VscSourceControl />
           </div>
-          <div className="icon" title="Extensions">
+          <div className="icon">
             <VscExtensions />
           </div>
           <div className="spacer" />
-          <div className="icon" title="Accounts">
+          <div className="icon">
             <VscAccount />
           </div>
-          <div className="icon" title="Manage">
+          <div className="icon">
             <VscSettingsGear />
           </div>
         </ActivityBar>
 
-        {/* 사이드바 */}
         <Sidebar>
           <SidebarTitle>EXPLORER</SidebarTitle>
           <SidebarSection>∨ PORTFOLIO WORKSPACE</SidebarSection>
@@ -1118,8 +1136,7 @@ export default function Portfolio() {
           </div>
         </Sidebar>
 
-        <MainContainer>
-          {/* 에디터 탭 바 */}
+        <MainContainer ref={mainContainerRef}>
           <EditorTabs>
             <div className="tabs-wrapper">
               {openTabs.map((tab, idx) => (
@@ -1130,22 +1147,31 @@ export default function Portfolio() {
                 >
                   <span className="f-icon">{getFileIcon(tab.file.name)}</span>
                   <span className="f-name">{tab.file.name}</span>
-                  <span
-                    className="f-close"
-                    onClick={(e) => closeTab(e, idx)}
-                    title="닫기"
-                  >
+                  <span className="f-close" onClick={(e) => closeTab(e, idx)}>
                     <VscClose />
                   </span>
                 </Tab>
               ))}
             </div>
-            {/* 설명으로 돌아가기 버튼 */}
             <HeaderActions>
-              <BackToInfoBtn
-                onClick={() => setViewMode(1)}
-                title="설명으로 돌아가기"
-              >
+              {hasImage && (
+                <>
+                  <ViewToggleBtn
+                    active={showImage}
+                    onClick={() => setShowImage((v) => !v)}
+                  >
+                    <VscFileMedia style={{ marginRight: "4px" }} /> 이미지
+                  </ViewToggleBtn>
+                  <ViewToggleBtn
+                    active={showCode}
+                    onClick={() => setShowCode((v) => !v)}
+                  >
+                    <VscCode style={{ marginRight: "4px" }} /> 코드
+                  </ViewToggleBtn>
+                  <Divider />
+                </>
+              )}
+              <BackToInfoBtn onClick={() => setViewMode(1)}>
                 ← 설명으로 돌아가기
               </BackToInfoBtn>
             </HeaderActions>
@@ -1156,27 +1182,53 @@ export default function Portfolio() {
             &gt; <span>{activeFile?.name}</span>
           </Breadcrumb>
 
-          {/* 에디터 영역 (드래그 리사이즈) */}
           <EditorArea ref={editorAreaRef}>
-            {hasImage && (
+            {showOnlyImg && (
+              <ImageSection style={{ width: "100%" }}>
+                <img src={activeFile.img} alt="preview" />
+              </ImageSection>
+            )}
+
+            {showOnlyCode && (
+              <CodeSection style={{ width: "100%" }}>
+                <SyntaxHighlighter
+                  language={getLang(activeFile?.type)}
+                  style={vscDarkPlus}
+                  showLineNumbers
+                  wrapLines
+                  customStyle={{
+                    background: "transparent",
+                    margin: 0,
+                    padding: "15px 20px",
+                    fontSize: "13px",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  {activeFile?.code || ""}
+                </SyntaxHighlighter>
+              </CodeSection>
+            )}
+
+            {showBoth && (
               <>
                 <ImageSection style={{ width: `${imgWidthPct}%` }}>
                   <img src={activeFile.img} alt="preview" />
                 </ImageSection>
-
-                {/* 드래그 핸들 */}
-                <DividerHandle onMouseDown={onDividerMouseDown}>
+                <DividerHandle
+                  onMouseDown={() => {
+                    isDraggingEditor.current = true;
+                  }}
+                >
                   <div className="line" />
                   <div className="grip">⠿</div>
                   <div className="line" />
                 </DividerHandle>
-
                 <CodeSection style={{ flex: 1 }}>
                   <SyntaxHighlighter
-                    language={getLangForHighlighter(activeFile?.type)}
+                    language={getLang(activeFile?.type)}
                     style={vscDarkPlus}
-                    showLineNumbers={true}
-                    wrapLines={true}
+                    showLineNumbers
+                    wrapLines
                     customStyle={{
                       background: "transparent",
                       margin: 0,
@@ -1190,111 +1242,65 @@ export default function Portfolio() {
                 </CodeSection>
               </>
             )}
-
-            {!hasImage && (
-              <CodeSection style={{ width: "100%" }}>
-                <SyntaxHighlighter
-                  language={getLangForHighlighter(activeFile?.type)}
-                  style={vscDarkPlus}
-                  showLineNumbers={true}
-                  wrapLines={true}
-                  customStyle={{
-                    background: "transparent",
-                    margin: 0,
-                    padding: "15px 20px",
-                    fontSize: "13px",
-                    lineHeight: "1.5",
-                  }}
-                >
-                  {activeFile?.code || ""}
-                </SyntaxHighlighter>
-              </CodeSection>
-            )}
           </EditorArea>
 
-          {/* 터미널 영역 */}
-          <ConsoleArea>
+          <ConsoleDivider
+            onMouseDown={() => {
+              isDraggingConsole.current = true;
+            }}
+          >
+            <div className="dots">· · · · · · · · · · · · · · · · · · · ·</div>
+          </ConsoleDivider>
+
+          <ConsoleArea style={{ height: `${consoleHeight}px` }}>
             <TerminalTabs>
-              {/* 터미널 서브탭 */}
-              <span
-                className={
-                  terminalTab === "설명" ? "active" : "inactive terminal-sub"
-                }
+              <TermSubTab
+                active={terminalTab === "설명"}
                 onClick={() => setTerminalTab("설명")}
               >
-                <VscTerminal
-                  style={{ verticalAlign: "middle", marginRight: "4px" }}
-                />
+                <VscTerminal style={{ marginRight: "4px" }} />
                 화면 설명
-              </span>
-              <span
-                className={
-                  terminalTab === "회고" ? "active" : "inactive terminal-sub"
-                }
+              </TermSubTab>
+              <TermSubTab
+                active={terminalTab === "회고"}
                 onClick={() => setTerminalTab("회고")}
               >
-                <VscMarkdown
-                  style={{ verticalAlign: "middle", marginRight: "4px" }}
-                />
+                <VscMarkdown style={{ marginRight: "4px" }} />
                 회고
-              </span>
-              <span
-                className={
-                  terminalTab === "트러블슈팅"
-                    ? "active"
-                    : "inactive terminal-sub"
-                }
+              </TermSubTab>
+              <TermSubTab
+                active={terminalTab === "트러블슈팅"}
                 onClick={() => setTerminalTab("트러블슈팅")}
               >
-                <VscFile
-                  style={{ verticalAlign: "middle", marginRight: "4px" }}
-                />
+                <VscFile style={{ marginRight: "4px" }} />
                 트러블슈팅
-              </span>
+              </TermSubTab>
             </TerminalTabs>
             <TerminalContent>
-              {terminalTab === "설명" ? (
-                <>
-                  <div className="prompt">
-                    <span className="path">portfolio@macbook</span>{" "}
-                    <span className="colon">:</span>{" "}
-                    <span className="dir">~/{activeProject}</span>$ ./explain.sh{" "}
-                    {activeFile?.name}
-                  </div>
-                  <div className="output">
-                    {typedDesc}
-                    <span className="cursor">█</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="prompt">
-                    <span className="path">portfolio@macbook</span>{" "}
-                    <span className="colon">:</span>{" "}
-                    <span className="dir">~/{activeProject}</span>$ cat{" "}
-                    {terminalTab === "회고"
-                      ? "RETROSPECTIVE.md"
-                      : "TROUBLESHOOTING.md"}
-                  </div>
-                  <div className="output">
-                    {typedDesc}
-                    <span className="cursor">█</span>
-                  </div>
-                </>
-              )}
+              <div className="prompt">
+                <span className="path">portfolio@macbook</span>
+                <span className="colon">:</span>
+                <span className="dir">~/{activeProject}</span>
+                {terminalTab === "설명"
+                  ? `$ ./explain.sh ${activeFile?.name}`
+                  : terminalTab === "회고"
+                    ? `$ cat RETROSPECTIVE.md   # ${activeFile?.name}`
+                    : `$ cat TROUBLESHOOTING.md   # ${activeFile?.name}`}
+              </div>
+              <div className="output">
+                {typedDesc}
+                <span className="cursor">█</span>
+              </div>
             </TerminalContent>
           </ConsoleArea>
         </MainContainer>
       </AppCore>
 
-      {/* 상태바 */}
       <StatusBar>
         <div className="left">
           <span className="item remote">{"><"}</span>
           <span className="item">
-            <VscSourceControl
-              style={{ verticalAlign: "middle", marginRight: "4px" }}
-            />
+            <VscSourceControl style={{ marginRight: "4px" }} />
             main*
           </span>
           <span className="item">❌ 0 ⚠️ 0</span>
@@ -1314,15 +1320,14 @@ export default function Portfolio() {
   );
 }
 
-// ─── 스타일 컴포넌트 ──────────────────────────────────────────────────────────
-
+// ─── 스타일 ───────────────────────────────────────────────────────────────────
 const IntroScreen = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 100vh;
-  background-color: #1e1e1e;
+  background: #1e1e1e;
   color: #d4d4d4;
   font-family: "Consolas", "Courier New", monospace;
   .content {
@@ -1338,25 +1343,22 @@ const IntroScreen = styled.div`
     color: #ff3f3f;
     font-weight: 700;
     font-size: 1.5rem;
-    text-shadow: 0 0 8px rgba(220, 178, 170, 0.3);
   }
   .guide-text {
     font-size: 0.9rem;
     color: #858585;
     margin-bottom: 40px;
-    font-family: "Pretendard", "Malgun Gothic", sans-serif;
   }
   .next-btn {
     padding: 12px 24px;
     font-size: 1.1rem;
-    background-color: #0e639c;
+    background: #0e639c;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background 0.3s;
     &:hover {
-      background-color: #1177bb;
+      background: #1177bb;
     }
   }
   @keyframes fadeIn {
@@ -1375,17 +1377,16 @@ const SplitScreen = styled.div`
   display: flex;
   width: 100%;
   height: 100vh;
-  background-color: #1e1e1e;
-  color: #cccccc;
-  font-family: "Pretendard", "Malgun Gothic", sans-serif;
+  background: #1e1e1e;
+  color: #ccc;
   overflow: hidden;
 `;
 
 const LeftPanel = styled.div`
   width: 50%;
   padding: 40px 50px;
-  background-color: #181818;
-  border-right: 1px solid #333333;
+  background: #181818;
+  border-right: 1px solid #333;
   overflow-y: auto;
   position: relative;
   &::-webkit-scrollbar {
@@ -1412,7 +1413,7 @@ const LeftPanel = styled.div`
     margin-bottom: 40px;
     .name {
       font-size: 2.2rem;
-      color: #ffffff;
+      color: #fff;
       margin-bottom: 5px;
     }
     .job-title {
@@ -1424,7 +1425,7 @@ const LeftPanel = styled.div`
     display: flex;
     flex-direction: column;
     gap: 15px;
-    padding-bottom: 80px;
+    padding-bottom: 30px;
   }
   .info-section {
     .section-title {
@@ -1469,7 +1470,7 @@ const RightPanel = styled.div`
   padding: 50px;
   display: flex;
   flex-direction: column;
-  background-color: #1e1e1e;
+  background: #1e1e1e;
   .toc-title {
     font-size: 1.8rem;
     color: #4ec9b0;
@@ -1497,7 +1498,7 @@ const RightPanel = styled.div`
     border-radius: 6px;
     padding: 20px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     &:hover {
       background: #2d2d2d;
       border-color: #569cd6;
@@ -1506,7 +1507,6 @@ const RightPanel = styled.div`
   .card-header {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
     .num {
       font-size: 1.2rem;
       color: #858585;
@@ -1536,15 +1536,14 @@ const RightPanel = styled.div`
     padding: 16px;
     font-size: 1.1rem;
     font-weight: bold;
-    background-color: #0e639c;
+    background: #0e639c;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.3s;
     margin-bottom: 70px;
     &:hover {
-      background-color: #1177bb;
+      background: #1177bb;
     }
   }
 `;
@@ -1553,7 +1552,7 @@ const TechTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
-  background-color: #1e1e1e;
+  background: #1e1e1e;
   border: 1px solid #333;
   color: #d4d4d4;
   th,
@@ -1594,7 +1593,7 @@ const TitleBar = styled.div`
     display: flex;
     align-items: center;
     font-size: 13px;
-    color: #cccccc;
+    color: #ccc;
     .logo {
       width: 16px;
       height: 16px;
@@ -1699,7 +1698,7 @@ const Sidebar = styled.nav`
 `;
 
 const SidebarTitle = styled.div`
-  padding: 15px 20px 10px 20px;
+  padding: 15px 20px 10px;
   font-size: 11px;
   color: #bbb;
   letter-spacing: 1px;
@@ -1817,7 +1816,6 @@ const Tab = styled.div`
     transition: 0.15s;
     border-radius: 4px;
     padding: 2px;
-    margin-left: auto;
     flex-shrink: 0;
     color: #aaa;
   }
@@ -1833,9 +1831,34 @@ const Tab = styled.div`
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 8px;
+  gap: 4px;
   background: #252526;
   flex-shrink: 0;
+`;
+
+const ViewToggleBtn = styled.button`
+  background: ${(p) => (p.active ? "#37373d" : "transparent")};
+  color: ${(p) => (p.active ? "#fff" : "#888")};
+  border: 1px solid ${(p) => (p.active ? "#555" : "#3c3c3c")};
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  &:hover {
+    background: #2a2d2e;
+    color: #fff;
+  }
+`;
+
+const Divider = styled.div`
+  width: 1px;
+  height: 16px;
+  background: #444;
+  margin: 0 4px;
 `;
 
 const BackToInfoBtn = styled.button`
@@ -1843,8 +1866,8 @@ const BackToInfoBtn = styled.button`
   color: #9cdcfe;
   border: 1px solid #3c3c3c;
   cursor: pointer;
-  font-size: 12px;
-  padding: 4px 10px;
+  font-size: 11px;
+  padding: 3px 8px;
   border-radius: 3px;
   display: flex;
   align-items: center;
@@ -1875,7 +1898,6 @@ const EditorArea = styled.div`
   flex: 1;
   display: flex;
   overflow: hidden;
-  position: relative;
 `;
 
 const ImageSection = styled.div`
@@ -1905,12 +1927,7 @@ const DividerHandle = styled.div`
   align-items: center;
   justify-content: center;
   gap: 4px;
-  position: relative;
   z-index: 10;
-  &:hover,
-  &:active {
-    background: #007acc44;
-  }
   .line {
     width: 1px;
     height: 30%;
@@ -1920,8 +1937,10 @@ const DividerHandle = styled.div`
     color: #555;
     font-size: 10px;
     line-height: 1;
-    letter-spacing: -1px;
     user-select: none;
+  }
+  &:hover {
+    background: #007acc22;
   }
   &:hover .line {
     background: #007acc;
@@ -1946,46 +1965,71 @@ const CodeSection = styled.div`
   }
 `;
 
-const ConsoleArea = styled.div`
-  height: 280px;
-  background: #1e1e1e;
+const ConsoleDivider = styled.div`
+  height: 6px;
+  background: #252526;
+  cursor: row-resize;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-top: 1px solid #2b2b2b;
+  border-bottom: 1px solid #2b2b2b;
+  user-select: none;
+  .dots {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  &:hover {
+    background: #2a2d2e;
+  }
+  &:hover .dots {
+    color: #007acc;
+  }
+`;
+
+const ConsoleArea = styled.div`
+  background: #1e1e1e;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
 `;
 
 const TerminalTabs = styled.div`
   display: flex;
   padding: 0 20px;
-  gap: 4px;
+  gap: 2px;
   border-bottom: 1px solid #2b2b2b;
   align-items: stretch;
+  flex-shrink: 0;
   span {
-    padding: 8px 12px;
+    padding: 7px 10px;
     font-size: 11px;
     cursor: pointer;
     letter-spacing: 0.5px;
-    font-family: "Segoe UI", sans-serif;
     display: flex;
     align-items: center;
     white-space: nowrap;
-    &.active {
-      color: #e7e7e7;
-      border-bottom: 1px solid #e7e7e7;
-    }
     &.inactive {
       color: #888;
       &:hover {
         color: #ccc;
       }
     }
-    &.terminal-sub {
-      border-radius: 3px 3px 0 0;
-      &:hover {
-        background: #2a2d2e;
-        color: #ccc;
-      }
-    }
+  }
+`;
+
+const TermSubTab = styled.span`
+  color: ${(p) => (p.active ? "#e7e7e7" : "#888")} !important;
+  border-bottom: ${(p) => (p.active ? "1px solid #e7e7e7" : "none")} !important;
+  background: ${(p) => (p.active ? "#1e1e1e22" : "transparent")};
+  border-radius: 3px 3px 0 0;
+  &:hover {
+    color: #ccc !important;
+    background: #2a2d2e;
   }
 `;
 
@@ -2025,7 +2069,6 @@ const TerminalContent = styled.div`
     line-height: 1.6;
     .cursor {
       animation: blink 1s step-end infinite;
-      color: #ccc;
     }
   }
   @keyframes blink {
@@ -2049,7 +2092,6 @@ const StatusBar = styled.div`
   color: white;
   padding: 0 10px;
   font-family: "Segoe UI", sans-serif;
-  cursor: default;
   user-select: none;
   .left,
   .right {
