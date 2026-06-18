@@ -234,16 +234,18 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 init용 인덱스를 통한 튜닝 진행하여 최저 8.2초 최대 16.8초 평균 12.4초까지 속도를 개선했으나, 사용자가 사용하기에 모자라다고 판단하여 캐싱을 진행했습니다.
 materialized view를 활용하여 스케줄러를 통해 10분에 한 번씩 값이 반영되도록 설계했습니다. 조회 속도가 최저 0.24초 최대 0.48초 평균 0.38초까지 개선되었습니다.█`,code:`-- 기존에 테이블이 있다면 삭제
 DROP TABLE IF EXISTS place_summary;
+-- 기존에 존재하는 Materialized view 삭제
 DROP MATERIALIZED VIEW IF EXISTS place_summary;
 
-
+-- Materialized View 생성
 CREATE MATERIALIZED VIEW place_summary AS
 
+// 예약정보
 WITH RsvnStats AS (
     SELECT
         p.no as place_no,
         p.type,
-        s.no as station_no,   
+        s.no as station_no,
         o.no as office_no,
         w.no as work_stay_no,
         COUNT(DISTINCT r.no) AS rsvn_cnt,
@@ -256,60 +258,98 @@ WITH RsvnStats AS (
         (p.type = 'STATION' AND r.station_no = s.no)
         OR (p.type = 'OFFICE' AND r.office_no = o.no)
         OR (p.type = 'WORK_STAY' AND r.work_stay_no = w.no)
-    )
+        )
+        //예약 확정인 예약데이터만
+        INNER JOIN rsvn rcnt ON r.no = rcnt.no AND rcnt.status = 'S'
     LEFT JOIN review rev ON rev.rsvn_no = r.no
     GROUP BY p.no, p.type, s.no, o.no, w.no
 ),
+// 대표사진 1장
 ImgInfo AS (
-    SELECT DISTINCT ON (place_no) place_no, current_url 
-    FROM img_place 
+    SELECT DISTINCT ON (place_no) place_no, current_url
+    FROM img_place
     WHERE sort = 1
     ORDER BY place_no
 ),
+//워크앤스테이 추천알고리즘을 위한 편의시설 리스트
 AmenityInfo AS (
     SELECT wa.work_no, STRING_AGG(a.name, ',') as names
     FROM work_amenity wa
     JOIN amenity a ON a.no = wa.amenity_no
     GROUP BY wa.work_no
 ),
+//오피스의 가격정보는 테이블이 별도
 OfficeMinPrice AS (
     SELECT office_no, MIN(price) as min_price
     FROM office_period
     WHERE exception_start_date IS NULL
     GROUP BY office_no
 )
+//메인 조회쿼리
 SELECT
     p.no as place_no,
+    //상세조회를 위한 타입 준비
     p.type,
-    MAX(CASE WHEN p.type = 'STATION' THEN s.no WHEN p.type = 'OFFICE' THEN o.no ELSE w.no END) as target_no,
+    //상세조회를 위한 유닛ID값 준비
+    MAX(
+            CASE
+                WHEN p.type = 'STATION' THEN s.no
+                WHEN p.type = 'OFFICE' THEN o.no
+                ELSE w.no
+                END
+    ) as target_no,
+    //유닛의 이름
     MAX(p.title || ' ' || COALESCE(s.title, o.title, w.title)) as title,
     MAX(p.address) as address,
     MAX(i.current_url) as current_url,
-    MAX(COALESCE(s.mon_price, op.min_price, w.mon_price, 0)) as price, 
-    MAX(ROUND(CASE WHEN COALESCE(rs.rsvn_cnt, 0) = 0 THEN 0.0 ELSE ((rs.rsvn_cnt * 0.7) + (COALESCE(rs.avg_score, 0.0) * 0.3)) * 100 END)::int) as final_score,
+    MAX(COALESCE(s.mon_price, op.min_price, w.mon_price, 0)) as price,
+    //통계 점수 계산
+    MAX(
+            ROUND(
+                    CASE
+                        WHEN COALESCE(rs.rsvn_cnt, 0) = 0 THEN 0.0
+                        ELSE ((rs.rsvn_cnt * 0.7) + (COALESCE(rs.avg_score, 0.0) * 0.3)) * 100
+                        END
+                        +
+                    CASE
+                        WHEN p.created_at >= NOW() - INTERVAL '7 days' THEN 50
+                        ELSE 0
+                        END
+            )::int
+    ) as final_score,
+     //예약건수
     MAX(COALESCE(rs.rsvn_cnt, 0)) as rsvn_count,
+    //리뷰 평균 점수
     MAX(COALESCE(rs.avg_score, 0.0)) as avg_score,
     MAX(am.names) as amenities,
     MAX(p.status) as status,
     NOW() as updated_at
 FROM place p
-LEFT JOIN station s ON p.type = 'STATION' AND s.place_no = p.no
-LEFT JOIN office o ON p.type = 'OFFICE' AND o.place_no = p.no
-LEFT JOIN work_stay w ON p.type = 'WORK_STAY' AND w.place_no = p.no
-LEFT JOIN RsvnStats rs ON rs.place_no = p.no 
-    AND rs.type = p.type 
-    AND (
-        (p.type = 'STATION' AND rs.station_no = s.no)
-        OR (p.type = 'OFFICE' AND rs.office_no = o.no)
-        OR (p.type = 'WORK_STAY' AND rs.work_stay_no = w.no)
-    )
-LEFT JOIN ImgInfo i ON i.place_no = p.no
-LEFT JOIN AmenityInfo am ON am.work_no = w.no
-LEFT JOIN OfficeMinPrice op ON op.office_no = o.no
+         LEFT JOIN station s
+                   ON p.type = 'STATION'
+                       AND s.place_no = p.no
+         LEFT JOIN office o
+                   ON p.type = 'OFFICE'
+                       AND o.place_no = p.no
+         LEFT JOIN work_stay w
+                   ON p.type = 'WORK_STAY'
+                       AND w.place_no = p.no
+         LEFT JOIN RsvnStats rs
+                   ON rs.place_no = p.no
+                       AND rs.type = p.type
+                       AND (
+                          (p.type = 'STATION' AND rs.station_no = s.no)
+                              OR (p.type = 'OFFICE' AND rs.office_no = o.no)
+                              OR (p.type = 'WORK_STAY' AND rs.work_stay_no = w.no)
+                          )
+         LEFT JOIN ImgInfo i ON i.place_no = p.no
+         LEFT JOIN AmenityInfo am ON am.work_no = w.no
+         LEFT JOIN OfficeMinPrice op ON op.office_no = o.no
 WHERE p.status = 'I'
 GROUP BY p.no, p.type, s.no, o.no, w.no;
-
-CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type);`},{name:`워크앤스테이 상세.java`,type:`java`,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_workStayDetailPage.png`,desc:`워크앤스테이 상세조회 화면입니다.
+-- REFRESH CONCURRENTLY를 위한 인덱스 생성
+CREATE UNIQUE INDEX idx_place_summary_unique ON place_summary (place_no, type, target_no);
+`},{name:`워크앤스테이 상세.java`,type:`java`,img:`https://kh0514-006116051973-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/sloway_workStayDetailPage.png`,desc:`워크앤스테이 상세조회 화면입니다.
 
 다중 Join이 발생하는 테이블 구조를 알고리즘을 위해 설계된 place_summary (Materialized View)를 조회하는 방식으로 구조화하여 조회 성능을 대폭 향상했습니다.
 또한, 쿼리 플랜 분석을 바탕으로 인덱스를 전략적으로 배치하여 데이터 조회 속도를 최적화했습니다.
